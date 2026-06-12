@@ -16,7 +16,7 @@ function Login() {
 
     try {
       const response = await axios.post(
-        "https://https://employee-payroll-system-production-9563.up.railway.app/api/auth/login",
+        "https://employee-payroll-system-production-9563.up.railway.app/api/auth/login",
         { username, password }
       );
 

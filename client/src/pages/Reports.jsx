@@ -14,7 +14,7 @@ const selectStyle = {
   border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)",
   padding: "9px 36px 9px 14px", fontSize: "14px", fontFamily: "inherit",
   appearance: "none",
-  backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
+  backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='https://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
   backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
 };
 
@@ -41,7 +41,7 @@ function Reports() {
 
   async function fetchEmployees() {
     try {
-      const r = await axios.get("https://https://employee-payroll-system-production-9563.up.railway.app/api/employees");
+      const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/employees");
       setEmployees(r.data);
     } catch (e) { console.log(e); }
   }
@@ -49,7 +49,7 @@ function Reports() {
   async function fetchReport() {
     setLoading(true); setData([]);
     try {
-      const r = await axios.get(`https://https://employee-payroll-system-production-9563.up.railway.app/api/reports/${activeTab.toLowerCase()}?month=${month}&year=${year}`);
+      const r = await axios.get(`https://employee-payroll-system-production-9563.up.railway.app/api/reports/${activeTab.toLowerCase()}?month=${month}&year=${year}`);
       setData(r.data);
     } catch (e) { console.log(e); }
     setLoading(false);

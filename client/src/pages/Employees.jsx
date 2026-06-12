@@ -32,7 +32,7 @@ function Employees() {
 
   async function fetchEmployees() {
     try {
-      const r = await axios.get("https://https://employee-payroll-system-production-9563.up.railway.app/api/employees");
+      const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/employees");
       setEmployees(r.data);
     } catch (e) { console.log(e); }
   }
@@ -43,9 +43,9 @@ function Employees() {
     if (!name || !department || !wage) { toast.error("Please fill name, department and wage"); return; }
     try {
       if (editingId) {
-        await axios.put(`https://https://employee-payroll-system-production-9563.up.railway.app/api/employees/${editingId}`, { name, department, wage, phone, notes });
+        await axios.put(`https://employee-payroll-system-production-9563.up.railway.app/api/employees/${editingId}`, { name, department, wage, phone, notes });
       } else {
-        await axios.post("https://https://employee-payroll-system-production-9563.up.railway.app/api/employees", { name, department, wage, phone, notes });
+        await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/employees", { name, department, wage, phone, notes });
       }
       await fetchEmployees(); clearForm();
       toast.success(editingId ? "Employee updated" : "Employee added");
@@ -61,18 +61,18 @@ function Employees() {
 
   async function markInactive(id) {
     if (!await confirmDialog("This employee will be marked as inactive.", "Mark Inactive")) return;
-    try { await axios.put(`https://https://employee-payroll-system-production-9563.up.railway.app/api/employees/inactive/${id}`); fetchEmployees(); toast.success("Employee marked inactive"); }
+    try { await axios.put(`https://employee-payroll-system-production-9563.up.railway.app/api/employees/inactive/${id}`); fetchEmployees(); toast.success("Employee marked inactive"); }
     catch (e) { console.log(e); }
   }
 
   async function reactivate(id) {
-    try { await axios.put(`https://https://employee-payroll-system-production-9563.up.railway.app/api/employees/active/${id}`); fetchEmployees(); toast.success("Employee reactivated"); }
+    try { await axios.put(`https://employee-payroll-system-production-9563.up.railway.app/api/employees/active/${id}`); fetchEmployees(); toast.success("Employee reactivated"); }
     catch (e) { console.log(e); }
   }
 
   async function deleteEmployee(id) {
     if (!await confirmDialog("This employee will be permanently deleted.", "Delete")) return;
-    try { await axios.delete(`https://https://employee-payroll-system-production-9563.up.railway.app/api/employees/${id}`); fetchEmployees(); toast.success("Employee deleted"); if (editingId === id) clearForm(); }
+    try { await axios.delete(`https://employee-payroll-system-production-9563.up.railway.app/api/employees/${id}`); fetchEmployees(); toast.success("Employee deleted"); if (editingId === id) clearForm(); }
     catch (e) { console.log(e); }
   }
 
