@@ -13,11 +13,23 @@ const PORT = process.env.PORT || 8000;
 app.use(express.json());
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://balanced-light-production-e602.up.railway.app"
-    ],
-    credentials: true
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, etc)
+      if (!origin) return callback(null, true);
+      // Allow localhost for development
+      if (origin.includes("localhost")) return callback(null, true);
+      // Allow all railway.app and vercel.app domains
+      if (origin.includes("railway.app") || origin.includes("vercel.app")) {
+        return callback(null, true);
+      }
+      // Allow specific CLIENT_URL from env
+      const clientUrl = process.env.CLIENT_URL || "";
+      if (clientUrl && origin === clientUrl) return callback(null, true);
+      // Allow all in development
+      if (process.env.NODE_ENV !== "production") return callback(null, true);
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
   })
 );
 
