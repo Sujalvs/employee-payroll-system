@@ -36,13 +36,13 @@ function Attendance() {
   useEffect(() => { fetchAttendance(); fetchEmployees(); }, []);
 
   async function fetchAttendance() {
-    try { const r = await axios.get("http://localhost:8000/api/attendance"); setRecords(r.data); }
+    try { const r = await axios.get("http://https://balanced-light-production-e602.up.railway.app/api/attendance"); setRecords(r.data); }
     catch (e) { console.log(e); }
   }
 
   async function fetchEmployees() {
     try {
-      const r = await axios.get("http://localhost:8000/api/employees");
+      const r = await axios.get("http://https://balanced-light-production-e602.up.railway.app/api/employees");
       const active = r.data.filter((e) => e.status === "Active");
       setEmployees(active);
       // Init bulk statuses
@@ -58,9 +58,9 @@ function Attendance() {
     if (!employee || !date) { toast.error("Please fill all fields"); return; }
     try {
       if (editingId) {
-        await axios.put(`http://localhost:8000/api/attendance/${editingId}`, { employeeId: employee, date, status });
+        await axios.put(`http://https://balanced-light-production-e602.up.railway.app/api/attendance/${editingId}`, { employeeId: employee, date, status });
       } else {
-        await axios.post("http://localhost:8000/api/attendance", { employeeId: employee, date, status });
+        await axios.post("http://https://balanced-light-production-e602.up.railway.app/api/attendance", { employeeId: employee, date, status });
       }
       fetchAttendance(); clearForm();
       toast.success(editingId ? "Attendance updated" : "Attendance saved");
@@ -75,7 +75,7 @@ function Attendance() {
       status: bulkStatuses[emp.id] || "Present",
     }));
     try {
-      await axios.post("http://localhost:8000/api/attendance/bulk", { records });
+      await axios.post("http://https://balanced-light-production-e602.up.railway.app/api/attendance/bulk", { records });
       fetchAttendance();
       toast.success(`Attendance saved for ${records.length} employees`);
     } catch (e) { toast.error("Something went wrong"); }
@@ -97,7 +97,7 @@ function Attendance() {
   async function deleteRecord(id) {
     if (!await confirmDialog("This attendance record will be deleted.")) return;
     try {
-      await axios.delete(`http://localhost:8000/api/attendance/${id}`);
+      await axios.delete(`http://https://balanced-light-production-e602.up.railway.app/api/attendance/${id}`);
       fetchAttendance(); toast.success("Record deleted");
       if (editingId === id) clearForm();
     } catch (e) { console.log(e); }

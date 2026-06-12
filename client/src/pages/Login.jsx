@@ -16,7 +16,7 @@ function Login() {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/api/auth/login",
+        "http://https://balanced-light-production-e602.up.railway.app/api/auth/login",
         { username, password }
       );
 

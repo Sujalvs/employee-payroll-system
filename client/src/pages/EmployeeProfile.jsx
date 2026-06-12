@@ -16,23 +16,23 @@ function EmployeeProfile() {
   }, []);
 
   async function fetchEmployee() {
-    try { const r = await axios.get(`http://localhost:8000/api/employees/${id}`); setEmployee(r.data); }
+    try { const r = await axios.get(`http://https://balanced-light-production-e602.up.railway.app/api/employees/${id}`); setEmployee(r.data); }
     catch (e) { console.log(e); }
   }
   async function fetchAttendance() {
-    try { const r = await axios.get(`http://localhost:8000/api/attendance/employee/${id}`); setAttendance(r.data); }
+    try { const r = await axios.get(`http://https://balanced-light-production-e602.up.railway.app/api/attendance/employee/${id}`); setAttendance(r.data); }
     catch (e) { console.log(e); }
   }
   async function fetchAdvances() {
-    try { const r = await axios.get(`http://localhost:8000/api/advances/employee/${id}`); setAdvances(r.data); }
+    try { const r = await axios.get(`http://https://balanced-light-production-e602.up.railway.app/api/advances/employee/${id}`); setAdvances(r.data); }
     catch (e) { console.log(e); }
   }
   async function fetchOvertime() {
-    try { const r = await axios.get(`http://localhost:8000/api/overtime/employee/${id}`); setOvertime(r.data); }
+    try { const r = await axios.get(`http://https://balanced-light-production-e602.up.railway.app/api/overtime/employee/${id}`); setOvertime(r.data); }
     catch (e) { console.log(e); }
   }
   async function fetchPayments() {
-    try { const r = await axios.get(`http://localhost:8000/api/payments/employee/${id}`); setPayments(r.data); }
+    try { const r = await axios.get(`http://https://balanced-light-production-e602.up.railway.app/api/payments/employee/${id}`); setPayments(r.data); }
     catch (e) { console.log(e); }
   }
 
