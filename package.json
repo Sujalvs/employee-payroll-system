@@ -1,6 +1,8 @@
 {
-  "dependencies": {
-    "react-router-dom": "^7.17.0",
-    "sqlite3": "^5.1.7"
+  "name": "kshethropasana-payroll",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd client && npm install && npm run build",
+    "start": "cd server && npm install && node index.js"
   }
 }
