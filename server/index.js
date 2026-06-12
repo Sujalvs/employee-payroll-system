@@ -123,19 +123,6 @@ try {
   if (autoBackup) scheduleCron(true);
 } catch(e) {}
 
-// Serve React frontend in production
-const clientBuildPath = path.join(__dirname, "../client/dist");
-if (fs.existsSync(clientBuildPath)) {
-  app.use(express.static(clientBuildPath));
-  // All non-API routes serve the React app
-  app.get("*", (req, res) => {
-    if (!req.path.startsWith("/api")) {
-      res.sendFile(path.join(clientBuildPath, "index.html"));
-    }
-  });
-  console.log("Serving React frontend from", clientBuildPath);
-} else {
-  app.get("/", (req, res) => res.send("Payroll Backend Running"));
-}
+app.get("/", (req, res) => res.send("Payroll Backend Running"));
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

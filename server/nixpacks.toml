@@ -2,11 +2,7 @@
 nixPkgs = ["nodejs_20", "python3", "gcc", "gnumake"]
 
 [phases.install]
-cmds = [
-  "cd /app/client && npm install",
-  "cd /app/client && npm run build",
-  "cd /app/server && npm install"
-]
+cmds = ["npm install"]
 
 [start]
-cmd = "cd /app/server && node index.js"
+cmd = "node index.js"
