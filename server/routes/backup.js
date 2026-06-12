@@ -3,19 +3,8 @@ const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
 
-const DB_PATH = path.join(__dirname, "../database/payroll.db");
-const BACKUP_DIR = path.join(__dirname, "../database/backups");
-const SETTINGS_PATH = path.join(__dirname, "../database/backup_settings.json");
-
-if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
-
-const upload = multer({
-  dest: path.join(__dirname, "../database/temp/"),
-  fileFilter: (req, file, cb) => {
-    if (file.originalname.endsWith(".db")) cb(null, true);
-    else cb(new Error("Only .db backup files are accepted"));
-  },
-});
+const SETTINGS_PATH = path.join(__dirname, "../backup_settings.json");
+const upload = multer({ dest: "/tmp/" });
 
 function loadSettings() {
   try { if (fs.existsSync(SETTINGS_PATH)) return JSON.parse(fs.readFileSync(SETTINGS_PATH, "utf8")); }
@@ -24,27 +13,10 @@ function loadSettings() {
 }
 
 function saveSettings(settings) {
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2));
+  try { fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2)); } catch(e) {}
 }
 
-function createBackup(label) {
-  const now = new Date();
-  const dateStr = now.toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const filename = `payroll_backup_${dateStr}${label ? "_" + label : ""}.db`;
-  const dest = path.join(BACKUP_DIR, filename);
-  fs.copyFileSync(DB_PATH, dest);
-  return { filename, size: fs.statSync(dest).size, createdAt: now.toISOString() };
-}
-
-function pruneOldBackups(keepDays) {
-  const cutoff = Date.now() - keepDays * 24 * 60 * 60 * 1000;
-  fs.readdirSync(BACKUP_DIR).filter(f => f.endsWith(".db")).forEach(f => {
-    const full = path.join(BACKUP_DIR, f);
-    if (fs.statSync(full).mtimeMs < cutoff) fs.unlinkSync(full);
-  });
-}
-
-module.exports = function (db, scheduleCron) {
+module.exports = function (pool, scheduleCron) {
   const router = express.Router();
 
   router.get("/settings", (req, res) => res.json(loadSettings()));
@@ -57,73 +29,52 @@ module.exports = function (db, scheduleCron) {
     res.json({ message: "Settings saved", settings });
   });
 
-  router.get("/list", (req, res) => {
+  // Export all data as JSON
+  router.post("/create", async (req, res) => {
     try {
-      if (!fs.existsSync(BACKUP_DIR)) return res.json([]);
-      const files = fs.readdirSync(BACKUP_DIR).filter(f => f.endsWith(".db"))
-        .map(f => { const full = path.join(BACKUP_DIR, f); const stat = fs.statSync(full); return { filename: f, size: stat.size, createdAt: stat.mtime.toISOString() }; })
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      res.json(files);
-    } catch(e) { res.status(500).json({ message: "Could not read backups" }); }
-  });
-
-  router.post("/create", (req, res) => {
-    try {
-      const backup = createBackup("manual");
-      pruneOldBackups(loadSettings().keepDays || 30);
+      const [emp, att, adv, ot, pmt, admins] = await Promise.all([
+        pool.query("SELECT * FROM employees"),
+        pool.query("SELECT * FROM attendance"),
+        pool.query("SELECT * FROM advances"),
+        pool.query("SELECT * FROM overtime"),
+        pool.query("SELECT * FROM payments"),
+        pool.query("SELECT id, username FROM admins"),
+      ]);
+      const backup = {
+        createdAt: new Date().toISOString(),
+        employees: emp.rows,
+        attendance: att.rows,
+        advances: adv.rows,
+        overtime: ot.rows,
+        payments: pmt.rows,
+        admins: admins.rows,
+      };
       res.json({ message: "Backup created successfully", backup });
-    } catch(e) { res.status(500).json({ message: "Backup failed: " + e.message }); }
+    } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.get("/download/:filename", (req, res) => {
-    const filename = path.basename(req.params.filename);
-    const full = path.join(BACKUP_DIR, filename);
-    if (!fs.existsSync(full)) return res.status(404).json({ message: "Backup file not found" });
-    res.download(full, filename);
-  });
+  // List — return empty for now (no file storage on Vercel)
+  router.get("/list", (req, res) => res.json([]));
 
-  router.delete("/:filename", (req, res) => {
-    const filename = path.basename(req.params.filename);
-    const full = path.join(BACKUP_DIR, filename);
-    if (!fs.existsSync(full)) return res.status(404).json({ message: "Backup not found" });
-    fs.unlinkSync(full);
-    res.json({ message: "Backup deleted" });
-  });
-
-  router.post("/restore", upload.single("backup"), (req, res) => {
-    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
-    try {
-      createBackup("pre-restore");
-      fs.copyFileSync(req.file.path, DB_PATH);
-      fs.unlinkSync(req.file.path);
-      res.json({ message: "Database restored successfully. Please restart the server." });
-    } catch(e) {
-      try { if (req.file?.path) fs.unlinkSync(req.file.path); } catch {}
-      res.status(500).json({ message: "Restore failed: " + e.message });
-    }
-  });
-
-  router.post("/reset", (req, res) => {
+  // Reset
+  router.post("/reset", async (req, res) => {
     const { resetPassword } = req.body;
     const correctPassword = process.env.RESET_PASSWORD || "Admin@1234";
     if (!resetPassword || resetPassword !== correctPassword)
       return res.status(401).json({ message: "Incorrect reset password. Access denied." });
     try {
-      createBackup("pre-reset");
-      db.exec(`
-        DELETE FROM attendance;
-        DELETE FROM advances;
-        DELETE FROM overtime;
-        DELETE FROM payments;
-        DELETE FROM employees;
-        DELETE FROM sqlite_sequence WHERE name IN ('attendance','advances','overtime','payments','employees');
-      `);
+      await pool.query("DELETE FROM attendance");
+      await pool.query("DELETE FROM advances");
+      await pool.query("DELETE FROM overtime");
+      await pool.query("DELETE FROM payments");
+      await pool.query("DELETE FROM employees");
+      await pool.query("DELETE FROM trash");
       res.json({ message: "System reset successfully." });
-    } catch(e) { res.status(500).json({ message: "Reset failed: " + e.message }); }
+    } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.createBackup = createBackup;
-  router.pruneOldBackups = pruneOldBackups;
+  router.createBackup = () => {};
+  router.pruneOldBackups = () => {};
   router.loadSettings = loadSettings;
 
   return router;

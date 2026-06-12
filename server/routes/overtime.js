@@ -1,40 +1,38 @@
 const express = require("express");
-
-function sendToTrash(db, type, label, data) {
-  db.prepare("INSERT INTO trash (type, label, data, deletedAt) VALUES (?,?,?,?)")
-    .run(type, label, JSON.stringify(data), new Date().toISOString());
-}
-
-module.exports = function (db) {
+module.exports = function (pool) {
   const router = express.Router();
 
-  router.get("/", (req, res) => {
+  async function sendToTrash(type, label, data) {
+    await pool.query("INSERT INTO trash (type, label, data, \"deletedAt\") VALUES ($1,$2,$3,$4)",
+      [type, label, JSON.stringify(data), new Date().toISOString()]);
+  }
+
+  router.get("/", async (req, res) => {
     try {
-      res.json(db.prepare(`SELECT overtime.id, overtime.employeeId, employees.name AS employeeName,
-        overtime.hours, overtime.rate, overtime.date
-        FROM overtime JOIN employees ON overtime.employeeId = employees.id`).all());
+      res.json((await pool.query(`SELECT o.id, o."employeeId", e.name AS "employeeName", o.hours, o.rate, o.date
+        FROM overtime o JOIN employees e ON o."employeeId"=e.id`)).rows);
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.get("/employee/:id", (req, res) => {
+  router.get("/employee/:id", async (req, res) => {
     try {
-      res.json(db.prepare("SELECT hours, rate, date FROM overtime WHERE employeeId=? ORDER BY date DESC").all(req.params.id));
+      res.json((await pool.query(`SELECT hours, rate, date FROM overtime WHERE "employeeId"=$1 ORDER BY date DESC`, [req.params.id])).rows);
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.post("/", (req, res) => {
+  router.post("/", async (req, res) => {
     const { employeeId, hours, rate, date } = req.body;
     try {
-      const result = db.prepare("INSERT INTO overtime (employeeId, hours, rate, date) VALUES (?,?,?,?)").run(employeeId, hours, rate, date);
-      res.json({ message: "Overtime added successfully", id: result.lastInsertRowid });
+      const r = await pool.query(`INSERT INTO overtime ("employeeId", hours, rate, date) VALUES ($1,$2,$3,$4) RETURNING id`, [employeeId, hours, rate, date]);
+      res.json({ message: "Overtime added successfully", id: r.rows[0].id });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.delete("/:id", (req, res) => {
+  router.delete("/:id", async (req, res) => {
     try {
-      const item = db.prepare("SELECT o.*, e.name AS empName FROM overtime o JOIN employees e ON o.employeeId=e.id WHERE o.id=?").get(req.params.id);
-      if (item) sendToTrash(db, "overtime", `${item.empName} - ${item.hours}hrs - ${item.date}`, item);
-      db.prepare("DELETE FROM overtime WHERE id=?").run(req.params.id);
+      const item = (await pool.query(`SELECT o.*, e.name AS "empName" FROM overtime o JOIN employees e ON o."employeeId"=e.id WHERE o.id=$1`, [req.params.id])).rows[0];
+      if (item) await sendToTrash("overtime", `${item.empName} - ${item.hours}hrs - ${item.date}`, item);
+      await pool.query("DELETE FROM overtime WHERE id=$1", [req.params.id]);
       res.json({ message: "Overtime moved to trash" });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });

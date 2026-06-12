@@ -1,41 +1,39 @@
 const express = require("express");
-
-function sendToTrash(db, type, label, data) {
-  db.prepare("INSERT INTO trash (type, label, data, deletedAt) VALUES (?,?,?,?)")
-    .run(type, label, JSON.stringify(data), new Date().toISOString());
-}
-
-module.exports = function (db) {
+module.exports = function (pool) {
   const router = express.Router();
 
-  router.get("/", (req, res) => {
+  async function sendToTrash(type, label, data) {
+    await pool.query("INSERT INTO trash (type, label, data, \"deletedAt\") VALUES ($1,$2,$3,$4)",
+      [type, label, JSON.stringify(data), new Date().toISOString()]);
+  }
+
+  router.get("/", async (req, res) => {
     try {
-      res.json(db.prepare(`SELECT payments.id, payments.employeeId, employees.name AS employeeName,
-        payments.amount, payments.note, payments.date, payments.category
-        FROM payments JOIN employees ON payments.employeeId = employees.id
-        ORDER BY payments.date DESC`).all());
+      res.json((await pool.query(`SELECT p.id, p."employeeId", e.name AS "employeeName", p.amount, p.note, p.date, p.category
+        FROM payments p JOIN employees e ON p."employeeId"=e.id ORDER BY p.date DESC`)).rows);
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.get("/employee/:id", (req, res) => {
+  router.get("/employee/:id", async (req, res) => {
     try {
-      res.json(db.prepare("SELECT amount, note, date, category FROM payments WHERE employeeId=? ORDER BY date DESC").all(req.params.id));
+      res.json((await pool.query(`SELECT amount, note, date, category FROM payments WHERE "employeeId"=$1 ORDER BY date DESC`, [req.params.id])).rows);
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.post("/", (req, res) => {
+  router.post("/", async (req, res) => {
     const { employeeId, amount, note, date, category } = req.body;
     try {
-      const result = db.prepare("INSERT INTO payments (employeeId, amount, note, date, category) VALUES (?,?,?,?,?)").run(employeeId, amount, note||null, date, category||null);
-      res.json({ message: "Payment added successfully", id: result.lastInsertRowid });
+      const r = await pool.query(`INSERT INTO payments ("employeeId", amount, note, date, category) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+        [employeeId, amount, note||null, date, category||null]);
+      res.json({ message: "Payment added successfully", id: r.rows[0].id });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.delete("/:id", (req, res) => {
+  router.delete("/:id", async (req, res) => {
     try {
-      const item = db.prepare("SELECT p.*, e.name AS empName FROM payments p JOIN employees e ON p.employeeId=e.id WHERE p.id=?").get(req.params.id);
-      if (item) sendToTrash(db, "payment", `${item.empName} - ₹${item.amount} - ${item.date}`, item);
-      db.prepare("DELETE FROM payments WHERE id=?").run(req.params.id);
+      const item = (await pool.query(`SELECT p.*, e.name AS "empName" FROM payments p JOIN employees e ON p."employeeId"=e.id WHERE p.id=$1`, [req.params.id])).rows[0];
+      if (item) await sendToTrash("payment", `${item.empName} - ₹${item.amount} - ${item.date}`, item);
+      await pool.query("DELETE FROM payments WHERE id=$1", [req.params.id]);
       res.json({ message: "Payment moved to trash" });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });

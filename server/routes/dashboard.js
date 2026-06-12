@@ -1,8 +1,8 @@
 const express = require("express");
-module.exports = function (db) {
+module.exports = function (pool) {
   const router = express.Router();
 
-  router.get("/chart", (req, res) => {
+  router.get("/chart", async (req, res) => {
     const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
     const now = new Date();
     const results = [];
@@ -11,30 +11,42 @@ module.exports = function (db) {
       const yyyy = String(d.getFullYear());
       const mm = String(d.getMonth() + 1).padStart(2, "0");
       try {
-        const row = db.prepare(`SELECT SUM(
-          (SELECT COUNT(*) FROM attendance a WHERE a.employeeId = e.id AND a.status='Present'
-           AND substr(a.date,1,4)=? AND substr(a.date,6,2)=?) * e.wage
-        ) AS payroll FROM employees e WHERE e.status='Active'`).get(yyyy, mm);
-        results.push({ month: monthNames[d.getMonth()], payroll: row?.payroll || 0 });
+        const r = await pool.query(`
+          SELECT COALESCE(SUM(
+            (SELECT COUNT(*) FROM attendance a WHERE a."employeeId"=e.id AND a.status='Present'
+             AND SUBSTRING(a.date,1,4)=$1 AND SUBSTRING(a.date,6,2)=$2) * e.wage
+          ),0) AS payroll FROM employees e WHERE e.status='Active'`, [yyyy, mm]);
+        results.push({ month: monthNames[d.getMonth()], payroll: Number(r.rows[0].payroll) || 0 });
       } catch(e) { results.push({ month: monthNames[d.getMonth()], payroll: 0 }); }
     }
     res.json(results);
   });
 
-  router.get("/", (req, res) => {
+  router.get("/", async (req, res) => {
     const today = new Date().toISOString().split("T")[0];
     const yyyy = today.substring(0, 4);
     const mm = today.substring(5, 7);
     try {
-      const totalEmployees = db.prepare("SELECT COUNT(*) AS c FROM employees WHERE status='Active'").get().c;
-      const presentToday = db.prepare("SELECT COUNT(*) AS c FROM attendance WHERE date=? AND status='Present'").get(today).c;
-      const absentToday = db.prepare("SELECT COUNT(*) AS c FROM attendance WHERE date=? AND status='Absent'").get(today).c;
-      const totalPayroll = db.prepare("SELECT COALESCE(SUM(wage),0) AS c FROM employees WHERE status='Active'").get().c;
-      const totalAdvances = db.prepare("SELECT COALESCE(SUM(amount),0) AS c FROM advances WHERE substr(date,1,4)=? AND substr(date,6,2)=?").get(yyyy, mm).c;
-      const totalOvertime = db.prepare("SELECT COALESCE(SUM(hours*rate),0) AS c FROM overtime WHERE substr(date,1,4)=? AND substr(date,6,2)=?").get(yyyy, mm).c;
-      const totalPayments = db.prepare("SELECT COALESCE(SUM(amount),0) AS c FROM payments WHERE substr(date,1,4)=? AND substr(date,6,2)=?").get(yyyy, mm).c;
-      const notMarkedToday = db.prepare("SELECT COUNT(*) AS c FROM employees WHERE status='Active' AND id NOT IN (SELECT employeeId FROM attendance WHERE date=?)").get(today).c;
-      res.json({ totalEmployees, presentToday, absentToday, notMarkedToday, totalPayroll, totalAdvances, totalOvertime, totalPayments });
+      const [emp, present, absent, payroll, adv, ot, pmt, notMarked] = await Promise.all([
+        pool.query("SELECT COUNT(*) AS c FROM employees WHERE status='Active'"),
+        pool.query("SELECT COUNT(*) AS c FROM attendance WHERE date=$1 AND status='Present'", [today]),
+        pool.query("SELECT COUNT(*) AS c FROM attendance WHERE date=$1 AND status='Absent'", [today]),
+        pool.query("SELECT COALESCE(SUM(wage),0) AS c FROM employees WHERE status='Active'"),
+        pool.query("SELECT COALESCE(SUM(amount),0) AS c FROM advances WHERE SUBSTRING(date,1,4)=$1 AND SUBSTRING(date,6,2)=$2", [yyyy, mm]),
+        pool.query("SELECT COALESCE(SUM(hours*rate),0) AS c FROM overtime WHERE SUBSTRING(date,1,4)=$1 AND SUBSTRING(date,6,2)=$2", [yyyy, mm]),
+        pool.query("SELECT COALESCE(SUM(amount),0) AS c FROM payments WHERE SUBSTRING(date,1,4)=$1 AND SUBSTRING(date,6,2)=$2", [yyyy, mm]),
+        pool.query(`SELECT COUNT(*) AS c FROM employees WHERE status='Active' AND id NOT IN (SELECT "employeeId" FROM attendance WHERE date=$1)`, [today]),
+      ]);
+      res.json({
+        totalEmployees: Number(emp.rows[0].c),
+        presentToday: Number(present.rows[0].c),
+        absentToday: Number(absent.rows[0].c),
+        notMarkedToday: Number(notMarked.rows[0].c),
+        totalPayroll: Number(payroll.rows[0].c),
+        totalAdvances: Number(adv.rows[0].c),
+        totalOvertime: Number(ot.rows[0].c),
+        totalPayments: Number(pmt.rows[0].c),
+      });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 

@@ -1,132 +1,122 @@
 const express = require("express");
-
-function sendToTrash(db, type, label, data) {
-  db.prepare("INSERT INTO trash (type, label, data, deletedAt) VALUES (?,?,?,?)")
-    .run(type, label, JSON.stringify(data), new Date().toISOString());
-}
-
-module.exports = function (db) {
+module.exports = function (pool) {
   const router = express.Router();
 
-  router.get("/", (req, res) => {
-    try { res.json(db.prepare("SELECT * FROM employees").all()); }
+  async function sendToTrash(type, label, data) {
+    await pool.query("INSERT INTO trash (type, label, data, \"deletedAt\") VALUES ($1,$2,$3,$4)",
+      [type, label, JSON.stringify(data), new Date().toISOString()]);
+  }
+
+  router.get("/", async (req, res) => {
+    try { res.json((await pool.query("SELECT * FROM employees")).rows); }
     catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.get("/present-today", (req, res) => {
+  router.get("/present-today", async (req, res) => {
     const today = new Date().toISOString().split("T")[0];
     try {
-      res.json(db.prepare(`SELECT e.id, e.name, e.department, e.phone FROM employees e
-        INNER JOIN attendance a ON a.employeeId = e.id
-        WHERE a.date=? AND a.status='Present' AND e.status='Active'`).all(today));
+      res.json((await pool.query(`SELECT e.id, e.name, e.department, e.phone FROM employees e
+        INNER JOIN attendance a ON a."employeeId"=e.id
+        WHERE a.date=$1 AND a.status='Present' AND e.status='Active'`, [today])).rows);
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.get("/absent-today", (req, res) => {
+  router.get("/absent-today", async (req, res) => {
     const today = new Date().toISOString().split("T")[0];
     try {
-      res.json(db.prepare(`SELECT e.id, e.name, e.department, e.phone FROM employees e
-        INNER JOIN attendance a ON a.employeeId = e.id
-        WHERE a.date=? AND a.status='Absent' AND e.status='Active'`).all(today));
+      res.json((await pool.query(`SELECT e.id, e.name, e.department, e.phone FROM employees e
+        INNER JOIN attendance a ON a."employeeId"=e.id
+        WHERE a.date=$1 AND a.status='Absent' AND e.status='Active'`, [today])).rows);
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.get("/not-marked-on/:date", (req, res) => {
+  router.get("/not-marked-on/:date", async (req, res) => {
     try {
-      res.json(db.prepare(`SELECT id, name, department, phone FROM employees
-        WHERE status='Active' AND id NOT IN (SELECT employeeId FROM attendance WHERE date=?)`).all(req.params.date));
+      res.json((await pool.query(`SELECT id, name, department, phone FROM employees
+        WHERE status='Active' AND id NOT IN (SELECT "employeeId" FROM attendance WHERE date=$1)`,
+        [req.params.date])).rows);
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.get("/present-on/:date", (req, res) => {
+  router.get("/present-on/:date", async (req, res) => {
     try {
-      res.json(db.prepare(`SELECT e.id, e.name, e.department, e.phone FROM employees e
-        INNER JOIN attendance a ON a.employeeId = e.id
-        WHERE a.date=? AND a.status='Present' AND e.status='Active'`).all(req.params.date));
+      res.json((await pool.query(`SELECT e.id, e.name, e.department, e.phone FROM employees e
+        INNER JOIN attendance a ON a."employeeId"=e.id
+        WHERE a.date=$1 AND a.status='Present' AND e.status='Active'`, [req.params.date])).rows);
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.get("/absent-on/:date", (req, res) => {
+  router.get("/absent-on/:date", async (req, res) => {
     try {
-      res.json(db.prepare(`SELECT e.id, e.name, e.department, e.phone FROM employees e
-        INNER JOIN attendance a ON a.employeeId = e.id
-        WHERE a.date=? AND a.status='Absent' AND e.status='Active'`).all(req.params.date));
+      res.json((await pool.query(`SELECT e.id, e.name, e.department, e.phone FROM employees e
+        INNER JOIN attendance a ON a."employeeId"=e.id
+        WHERE a.date=$1 AND a.status='Absent' AND e.status='Active'`, [req.params.date])).rows);
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.get("/:id", (req, res) => {
-    try { res.json(db.prepare("SELECT * FROM employees WHERE id=?").get(req.params.id)); }
+  router.get("/:id", async (req, res) => {
+    try { res.json((await pool.query("SELECT * FROM employees WHERE id=$1", [req.params.id])).rows[0]); }
     catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.post("/", (req, res) => {
+  router.post("/", async (req, res) => {
     const { name, department, wage, phone, notes } = req.body;
     try {
-      const cols = db.prepare("PRAGMA table_info(employees)").all().map(c => c.name);
-      let result;
-      if (cols.includes("position")) {
-        result = db.prepare("INSERT INTO employees (name, position, department, wage, status, phone, notes) VALUES (?,?,?,?,'Active',?,?)").run(name, department, department, wage, phone||null, notes||null);
-      } else {
-        result = db.prepare("INSERT INTO employees (name, department, wage, status, phone, notes) VALUES (?,?,?,'Active',?,?)").run(name, department, wage, phone||null, notes||null);
-      }
-      res.json({ message: "Employee added successfully", id: result.lastInsertRowid });
+      const r = await pool.query("INSERT INTO employees (name, department, wage, status, phone, notes) VALUES ($1,$2,$3,'Active',$4,$5) RETURNING id",
+        [name, department, wage, phone||null, notes||null]);
+      res.json({ message: "Employee added successfully", id: r.rows[0].id });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.put("/:id", (req, res) => {
+  router.put("/:id", async (req, res) => {
     const { name, department, wage, phone, notes } = req.body;
     try {
-      const cols = db.prepare("PRAGMA table_info(employees)").all().map(c => c.name);
-      if (cols.includes("position")) {
-        db.prepare("UPDATE employees SET name=?, position=?, department=?, wage=?, phone=?, notes=? WHERE id=?").run(name, department, department, wage, phone||null, notes||null, req.params.id);
-      } else {
-        db.prepare("UPDATE employees SET name=?, department=?, wage=?, phone=?, notes=? WHERE id=?").run(name, department, wage, phone||null, notes||null, req.params.id);
-      }
+      await pool.query("UPDATE employees SET name=$1, department=$2, wage=$3, phone=$4, notes=$5 WHERE id=$6",
+        [name, department, wage, phone||null, notes||null, req.params.id]);
       res.json({ message: "Employee updated successfully" });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.put("/inactive/:id", (req, res) => {
-    try { db.prepare("UPDATE employees SET status='Inactive' WHERE id=?").run(req.params.id); res.json({ message: "Employee marked inactive" }); }
+  router.put("/inactive/:id", async (req, res) => {
+    try { await pool.query("UPDATE employees SET status='Inactive' WHERE id=$1", [req.params.id]); res.json({ message: "Employee marked inactive" }); }
     catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.put("/active/:id", (req, res) => {
-    try { db.prepare("UPDATE employees SET status='Active' WHERE id=?").run(req.params.id); res.json({ message: "Employee reactivated" }); }
+  router.put("/active/:id", async (req, res) => {
+    try { await pool.query("UPDATE employees SET status='Active' WHERE id=$1", [req.params.id]); res.json({ message: "Employee reactivated" }); }
     catch(e) { res.status(500).json({ message: e.message }); }
   });
 
-  router.delete("/:id", (req, res) => {
+  router.delete("/:id", async (req, res) => {
+    const client = await pool.connect();
     try {
-      const deleteAll = db.transaction((id) => {
-        const emp = db.prepare("SELECT * FROM employees WHERE id=?").get(id);
-        if (!emp) return;
+      await client.query("BEGIN");
+      const emp = (await client.query("SELECT * FROM employees WHERE id=$1", [req.params.id])).rows[0];
+      if (!emp) { await client.query("ROLLBACK"); return res.status(404).json({ message: "Employee not found" }); }
 
-        // Move employee and all related records to trash
-        sendToTrash(db, "employee", emp.name, emp);
+      await sendToTrash("employee", emp.name, emp);
 
-        const attendance = db.prepare("SELECT * FROM attendance WHERE employeeId=?").all(id);
-        attendance.forEach(r => sendToTrash(db, "attendance", `${emp.name} - ${r.date}`, r));
+      const att = (await client.query("SELECT * FROM attendance WHERE \"employeeId\"=$1", [req.params.id])).rows;
+      for (const r of att) await sendToTrash("attendance", `${emp.name} - ${r.date}`, r);
 
-        const advances = db.prepare("SELECT * FROM advances WHERE employeeId=?").all(id);
-        advances.forEach(r => sendToTrash(db, "advance", `${emp.name} - ₹${r.amount}`, r));
+      const adv = (await client.query("SELECT * FROM advances WHERE \"employeeId\"=$1", [req.params.id])).rows;
+      for (const r of adv) await sendToTrash("advance", `${emp.name} - ₹${r.amount}`, r);
 
-        const overtime = db.prepare("SELECT * FROM overtime WHERE employeeId=?").all(id);
-        overtime.forEach(r => sendToTrash(db, "overtime", `${emp.name} - ${r.date}`, r));
+      const ot = (await client.query("SELECT * FROM overtime WHERE \"employeeId\"=$1", [req.params.id])).rows;
+      for (const r of ot) await sendToTrash("overtime", `${emp.name} - ${r.date}`, r);
 
-        const payments = db.prepare("SELECT * FROM payments WHERE employeeId=?").all(id);
-        payments.forEach(r => sendToTrash(db, "payment", `${emp.name} - ₹${r.amount}`, r));
+      const pmt = (await client.query("SELECT * FROM payments WHERE \"employeeId\"=$1", [req.params.id])).rows;
+      for (const r of pmt) await sendToTrash("payment", `${emp.name} - ₹${r.amount}`, r);
 
-        // Delete from main tables
-        db.prepare("DELETE FROM attendance WHERE employeeId=?").run(id);
-        db.prepare("DELETE FROM advances WHERE employeeId=?").run(id);
-        db.prepare("DELETE FROM overtime WHERE employeeId=?").run(id);
-        db.prepare("DELETE FROM payments WHERE employeeId=?").run(id);
-        db.prepare("DELETE FROM employees WHERE id=?").run(id);
-      });
-      deleteAll(req.params.id);
+      await client.query("DELETE FROM attendance WHERE \"employeeId\"=$1", [req.params.id]);
+      await client.query("DELETE FROM advances WHERE \"employeeId\"=$1", [req.params.id]);
+      await client.query("DELETE FROM overtime WHERE \"employeeId\"=$1", [req.params.id]);
+      await client.query("DELETE FROM payments WHERE \"employeeId\"=$1", [req.params.id]);
+      await client.query("DELETE FROM employees WHERE id=$1", [req.params.id]);
+      await client.query("COMMIT");
       res.json({ message: "Employee moved to trash" });
-    } catch(e) { res.status(500).json({ message: e.message }); }
+    } catch(e) { await client.query("ROLLBACK"); res.status(500).json({ message: e.message }); }
+    finally { client.release(); }
   });
 
   return router;
