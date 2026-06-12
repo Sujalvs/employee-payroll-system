@@ -11,17 +11,14 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 app.use(express.json());
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    if (origin.includes("localhost")) return callback(null, true);
-    if (origin.includes("railway.app") || origin.includes("vercel.app")) return callback(null, true);
-    const clientUrl = process.env.CLIENT_URL || "";
-    if (clientUrl && origin === clientUrl) return callback(null, true);
-    callback(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
-}));
+app.use(cors({ origin: "*", credentials: false }));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === "OPTIONS") return res.sendStatus(200);
+  next();
+});
 
 // Ensure database directory exists
 const DB_DIR = path.join(__dirname, "database");
