@@ -11,18 +11,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Init DB on cold start
 let initialized = false;
 app.use(async (req, res, next) => {
   if (!initialized) {
-    try { await initDB(); initialized = true; } catch(e) { console.error("DB init error:", e.message); }
+    try { await initDB(); initialized = true; } catch(e) { console.error("DB init:", e.message); }
   }
   next();
 });
 
 const pool = getPool();
 
-// Mount all routes
 app.use("/api/employees", require("./routes/employees")(pool));
 app.use("/api/attendance", require("./routes/attendance")(pool));
 app.use("/api/advances", require("./routes/advances")(pool));
@@ -37,4 +35,5 @@ app.use("/api/trash", require("./routes/trash")(pool));
 
 app.get("/api", (req, res) => res.send("Payroll Backend Running"));
 
+// Export for Vercel serverless
 module.exports = app;
