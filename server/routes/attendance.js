@@ -1,4 +1,10 @@
 const express = require("express");
+
+function sendToTrash(db, type, label, data) {
+  db.prepare("INSERT INTO trash (type, label, data, deletedAt) VALUES (?,?,?,?)")
+    .run(type, label, JSON.stringify(data), new Date().toISOString());
+}
+
 module.exports = function (db) {
   const router = express.Router();
 
@@ -49,8 +55,12 @@ module.exports = function (db) {
   });
 
   router.delete("/:id", (req, res) => {
-    try { db.prepare("DELETE FROM attendance WHERE id=?").run(req.params.id); res.json({ message: "Attendance deleted successfully" }); }
-    catch(e) { res.status(500).json({ message: e.message }); }
+    try {
+      const item = db.prepare("SELECT a.*, e.name AS empName FROM attendance a JOIN employees e ON a.employeeId=e.id WHERE a.id=?").get(req.params.id);
+      if (item) sendToTrash(db, "attendance", `${item.empName} - ${item.date} - ${item.status}`, item);
+      db.prepare("DELETE FROM attendance WHERE id=?").run(req.params.id);
+      res.json({ message: "Attendance moved to trash" });
+    } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
   // Delete orphaned records (no matching employee)

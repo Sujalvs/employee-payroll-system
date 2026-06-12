@@ -1,4 +1,10 @@
 const express = require("express");
+
+function sendToTrash(db, type, label, data) {
+  db.prepare("INSERT INTO trash (type, label, data, deletedAt) VALUES (?,?,?,?)")
+    .run(type, label, JSON.stringify(data), new Date().toISOString());
+}
+
 module.exports = function (db) {
   const router = express.Router();
 
@@ -56,7 +62,6 @@ module.exports = function (db) {
   router.post("/", (req, res) => {
     const { name, department, wage, phone, notes } = req.body;
     try {
-      // Check if position column exists and handle both old and new schema
       const cols = db.prepare("PRAGMA table_info(employees)").all().map(c => c.name);
       let result;
       if (cols.includes("position")) {
@@ -94,6 +99,25 @@ module.exports = function (db) {
   router.delete("/:id", (req, res) => {
     try {
       const deleteAll = db.transaction((id) => {
+        const emp = db.prepare("SELECT * FROM employees WHERE id=?").get(id);
+        if (!emp) return;
+
+        // Move employee and all related records to trash
+        sendToTrash(db, "employee", emp.name, emp);
+
+        const attendance = db.prepare("SELECT * FROM attendance WHERE employeeId=?").all(id);
+        attendance.forEach(r => sendToTrash(db, "attendance", `${emp.name} - ${r.date}`, r));
+
+        const advances = db.prepare("SELECT * FROM advances WHERE employeeId=?").all(id);
+        advances.forEach(r => sendToTrash(db, "advance", `${emp.name} - ₹${r.amount}`, r));
+
+        const overtime = db.prepare("SELECT * FROM overtime WHERE employeeId=?").all(id);
+        overtime.forEach(r => sendToTrash(db, "overtime", `${emp.name} - ${r.date}`, r));
+
+        const payments = db.prepare("SELECT * FROM payments WHERE employeeId=?").all(id);
+        payments.forEach(r => sendToTrash(db, "payment", `${emp.name} - ₹${r.amount}`, r));
+
+        // Delete from main tables
         db.prepare("DELETE FROM attendance WHERE employeeId=?").run(id);
         db.prepare("DELETE FROM advances WHERE employeeId=?").run(id);
         db.prepare("DELETE FROM overtime WHERE employeeId=?").run(id);
@@ -101,7 +125,7 @@ module.exports = function (db) {
         db.prepare("DELETE FROM employees WHERE id=?").run(id);
       });
       deleteAll(req.params.id);
-      res.json({ message: "Employee deleted successfully" });
+      res.json({ message: "Employee moved to trash" });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 

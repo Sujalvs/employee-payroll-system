@@ -62,6 +62,13 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE, password TEXT
   );
+  CREATE TABLE IF NOT EXISTS trash (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    label TEXT NOT NULL,
+    data TEXT NOT NULL,
+    deletedAt TEXT NOT NULL
+  );
 `);
 
 // Safe column migrations
@@ -105,6 +112,7 @@ const paymentsRoutes = require("./routes/payments")(db);
 const authRoutes = require("./routes/auth")(db);
 const reportsRoutes = require("./routes/reports")(db);
 const backupRouter = require("./routes/backup")(db, scheduleCron);
+const trashRouter = require("./routes/trash")(db);
 
 app.use("/api/employees", employeeRoutes);
 app.use("/api/attendance", attendanceRoutes);
@@ -116,6 +124,7 @@ app.use("/api/payments", paymentsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/backup", backupRouter);
+app.use("/api/trash", trashRouter);
 
 // Start cron if previously enabled
 try {

@@ -1,4 +1,10 @@
 const express = require("express");
+
+function sendToTrash(db, type, label, data) {
+  db.prepare("INSERT INTO trash (type, label, data, deletedAt) VALUES (?,?,?,?)")
+    .run(type, label, JSON.stringify(data), new Date().toISOString());
+}
+
 module.exports = function (db) {
   const router = express.Router();
 
@@ -25,8 +31,12 @@ module.exports = function (db) {
   });
 
   router.delete("/:id", (req, res) => {
-    try { db.prepare("DELETE FROM overtime WHERE id=?").run(req.params.id); res.json({ message: "Overtime deleted successfully" }); }
-    catch(e) { res.status(500).json({ message: e.message }); }
+    try {
+      const item = db.prepare("SELECT o.*, e.name AS empName FROM overtime o JOIN employees e ON o.employeeId=e.id WHERE o.id=?").get(req.params.id);
+      if (item) sendToTrash(db, "overtime", `${item.empName} - ${item.hours}hrs - ${item.date}`, item);
+      db.prepare("DELETE FROM overtime WHERE id=?").run(req.params.id);
+      res.json({ message: "Overtime moved to trash" });
+    } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
   return router;

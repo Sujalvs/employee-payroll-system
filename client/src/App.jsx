@@ -11,6 +11,7 @@ import Payments from "./pages/Payments";
 import Payroll from "./pages/Payroll";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
+import Trash from "./pages/Trash";
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -33,6 +34,7 @@ function App() {
           <Route path="payroll" element={<Payroll />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="trash" element={<Trash />} />
         </Route>
       </Routes>
     </BrowserRouter>

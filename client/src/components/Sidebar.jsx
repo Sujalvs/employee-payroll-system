@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Users, Calendar, Wallet,
-  Clock3, BadgeIndianRupee, CreditCard, FileText, LogOut, Settings,
+  Clock3, BadgeIndianRupee, CreditCard, FileText, LogOut, Settings, Trash2,
 } from "lucide-react";
 
 function Sidebar({ onLogout }) {
@@ -40,6 +40,7 @@ function Sidebar({ onLogout }) {
       <div className="sidebar-section-label">System</div>
       <ul>
         <li><NavLink to="/settings"><Settings size={15} /><span>Settings</span></NavLink></li>
+        <li><NavLink to="/trash"><Trash2 size={15} /><span>Trash</span></NavLink></li>
       </ul>
 
       <div className="sidebar-footer">
