@@ -53,5 +53,13 @@ module.exports = function (db) {
     catch(e) { res.status(500).json({ message: e.message }); }
   });
 
+  // Delete orphaned records (no matching employee)
+  router.delete("/cleanup/orphaned", (req, res) => {
+    try {
+      db.prepare("DELETE FROM attendance WHERE employeeId NOT IN (SELECT id FROM employees)").run();
+      res.json({ message: "Orphaned records cleaned up" });
+    } catch(e) { res.status(500).json({ message: e.message }); }
+  });
+
   return router;
 };

@@ -92,8 +92,17 @@ module.exports = function (db) {
   });
 
   router.delete("/:id", (req, res) => {
-    try { db.prepare("DELETE FROM employees WHERE id=?").run(req.params.id); res.json({ message: "Employee deleted successfully" }); }
-    catch(e) { res.status(500).json({ message: e.message }); }
+    try {
+      const deleteAll = db.transaction((id) => {
+        db.prepare("DELETE FROM attendance WHERE employeeId=?").run(id);
+        db.prepare("DELETE FROM advances WHERE employeeId=?").run(id);
+        db.prepare("DELETE FROM overtime WHERE employeeId=?").run(id);
+        db.prepare("DELETE FROM payments WHERE employeeId=?").run(id);
+        db.prepare("DELETE FROM employees WHERE id=?").run(id);
+      });
+      deleteAll(req.params.id);
+      res.json({ message: "Employee deleted successfully" });
+    } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
   return router;
