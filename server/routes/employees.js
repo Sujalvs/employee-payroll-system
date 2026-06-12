@@ -56,7 +56,14 @@ module.exports = function (db) {
   router.post("/", (req, res) => {
     const { name, department, wage, phone, notes } = req.body;
     try {
-      const result = db.prepare("INSERT INTO employees (name, department, wage, status, phone, notes) VALUES (?,?,?,'Active',?,?)").run(name, department, wage, phone||null, notes||null);
+      // Check if position column exists and handle both old and new schema
+      const cols = db.prepare("PRAGMA table_info(employees)").all().map(c => c.name);
+      let result;
+      if (cols.includes("position")) {
+        result = db.prepare("INSERT INTO employees (name, position, department, wage, status, phone, notes) VALUES (?,?,?,?,'Active',?,?)").run(name, department, department, wage, phone||null, notes||null);
+      } else {
+        result = db.prepare("INSERT INTO employees (name, department, wage, status, phone, notes) VALUES (?,?,?,'Active',?,?)").run(name, department, wage, phone||null, notes||null);
+      }
       res.json({ message: "Employee added successfully", id: result.lastInsertRowid });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
@@ -64,7 +71,12 @@ module.exports = function (db) {
   router.put("/:id", (req, res) => {
     const { name, department, wage, phone, notes } = req.body;
     try {
-      db.prepare("UPDATE employees SET name=?, department=?, wage=?, phone=?, notes=? WHERE id=?").run(name, department, wage, phone||null, notes||null, req.params.id);
+      const cols = db.prepare("PRAGMA table_info(employees)").all().map(c => c.name);
+      if (cols.includes("position")) {
+        db.prepare("UPDATE employees SET name=?, position=?, department=?, wage=?, phone=?, notes=? WHERE id=?").run(name, department, department, wage, phone||null, notes||null, req.params.id);
+      } else {
+        db.prepare("UPDATE employees SET name=?, department=?, wage=?, phone=?, notes=? WHERE id=?").run(name, department, wage, phone||null, notes||null, req.params.id);
+      }
       res.json({ message: "Employee updated successfully" });
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
