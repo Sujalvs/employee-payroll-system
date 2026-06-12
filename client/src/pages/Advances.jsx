@@ -29,19 +29,19 @@ function Advances() {
   useEffect(() => { fetchEmployees(); fetchAdvances(); }, []);
 
   async function fetchEmployees() {
-    const r = await axios.get("https://balanced-light-production-e602.up.railway.app/api/employees");
+    const r = await axios.get("https://https://employee-payroll-system-production-9563.up.railway.app/api/employees");
     setEmployees(r.data.filter((e) => e.status === "Active"));
   }
 
   async function fetchAdvances() {
-    const r = await axios.get("https://balanced-light-production-e602.up.railway.app/api/advances");
+    const r = await axios.get("https://https://employee-payroll-system-production-9563.up.railway.app/api/advances");
     setAdvances(r.data);
   }
 
   async function saveAdvance() {
     try {
       if (!employeeId || !amount || !date) { toast.error("Please fill all required fields"); return; }
-      await axios.post("https://balanced-light-production-e602.up.railway.app/api/advances", { employeeId, amount, reason, date });
+      await axios.post("https://https://employee-payroll-system-production-9563.up.railway.app/api/advances", { employeeId, amount, reason, date });
       setEmployeeId(""); setAmount(""); setReason(""); setDate("");
       fetchAdvances(); toast.success("Advance saved");
     } catch (e) { toast.error("Something went wrong"); }
@@ -50,7 +50,7 @@ function Advances() {
   async function deleteAdvance(id) {
     if (!await confirmDialog("This advance record will be deleted.")) return;
     try {
-      await axios.delete(`https://balanced-light-production-e602.up.railway.app/api/advances/${id}`);
+      await axios.delete(`https://https://employee-payroll-system-production-9563.up.railway.app/api/advances/${id}`);
       fetchAdvances(); toast.success("Advance deleted");
     } catch (e) { toast.error("Something went wrong"); }
   }

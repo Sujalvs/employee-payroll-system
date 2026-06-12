@@ -224,7 +224,7 @@ function Payroll() {
 
   async function fetchPayroll() {
     try {
-      const r = await axios.get(`https://balanced-light-production-e602.up.railway.app/api/payroll?month=${month}&year=${year}`);
+      const r = await axios.get(`https://https://employee-payroll-system-production-9563.up.railway.app/api/payroll?month=${month}&year=${year}`);
       setPayroll(r.data);
     } catch (e) { console.log(e); }
   }
