@@ -110,12 +110,12 @@ function Dashboard() {
   useEffect(() => { fetchDashboard(); fetchChartData(); }, []);
 
   async function fetchDashboard() {
-    try { const r = await axios.get("http://https://balanced-light-production-e602.up.railway.app/api/dashboard"); setStats(r.data); }
+    try { const r = await axios.get("https://balanced-light-production-e602.up.railway.app/api/dashboard"); setStats(r.data); }
     catch (e) { console.log(e); }
   }
 
   async function fetchChartData() {
-    try { const r = await axios.get("http://https://balanced-light-production-e602.up.railway.app/api/dashboard/chart"); setChartData(r.data); }
+    try { const r = await axios.get("https://balanced-light-production-e602.up.railway.app/api/dashboard/chart"); setChartData(r.data); }
     catch (e) { console.log(e); }
   }
 
@@ -132,7 +132,7 @@ function Dashboard() {
       if (type === "present") endpoint = `present-on/${date}`;
       else if (type === "absent") endpoint = `absent-on/${date}`;
       else endpoint = `not-marked-on/${date}`;
-      const r = await axios.get(`http://https://balanced-light-production-e602.up.railway.app/api/employees/${endpoint}`);
+      const r = await axios.get(`https://balanced-light-production-e602.up.railway.app/api/employees/${endpoint}`);
       setModalEmployees(r.data);
     } catch (e) { console.log(e); }
   }

@@ -41,7 +41,7 @@ function Reports() {
 
   async function fetchEmployees() {
     try {
-      const r = await axios.get("http://https://balanced-light-production-e602.up.railway.app/api/employees");
+      const r = await axios.get("https://balanced-light-production-e602.up.railway.app/api/employees");
       setEmployees(r.data);
     } catch (e) { console.log(e); }
   }
@@ -49,7 +49,7 @@ function Reports() {
   async function fetchReport() {
     setLoading(true); setData([]);
     try {
-      const r = await axios.get(`http://https://balanced-light-production-e602.up.railway.app/api/reports/${activeTab.toLowerCase()}?month=${month}&year=${year}`);
+      const r = await axios.get(`https://balanced-light-production-e602.up.railway.app/api/reports/${activeTab.toLowerCase()}?month=${month}&year=${year}`);
       setData(r.data);
     } catch (e) { console.log(e); }
     setLoading(false);

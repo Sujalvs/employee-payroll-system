@@ -53,19 +53,19 @@ function Payments() {
   useEffect(() => { fetchEmployees(); fetchPayments(); }, []);
 
   async function fetchEmployees() {
-    const r = await axios.get("http://https://balanced-light-production-e602.up.railway.app/api/employees");
+    const r = await axios.get("https://balanced-light-production-e602.up.railway.app/api/employees");
     setEmployees(r.data.filter((e) => e.status === "Active"));
   }
 
   async function fetchPayments() {
-    const r = await axios.get("http://https://balanced-light-production-e602.up.railway.app/api/payments");
+    const r = await axios.get("https://balanced-light-production-e602.up.railway.app/api/payments");
     setPayments(r.data);
   }
 
   async function savePayment() {
     try {
       if (!employeeId || !amount || !date) { toast.error("Please fill all required fields"); return; }
-      await axios.post("http://https://balanced-light-production-e602.up.railway.app/api/payments", { employeeId, amount, note, date, category });
+      await axios.post("https://balanced-light-production-e602.up.railway.app/api/payments", { employeeId, amount, note, date, category });
       setEmployeeId(""); setAmount(""); setNote(""); setDate(""); setCategory("Salary");
       fetchPayments(); toast.success("Payment saved");
     } catch (e) { toast.error("Something went wrong"); }
@@ -74,7 +74,7 @@ function Payments() {
   async function deletePayment(id) {
     if (!await confirmDialog("This payment record will be deleted.")) return;
     try {
-      await axios.delete(`http://https://balanced-light-production-e602.up.railway.app/api/payments/${id}`);
+      await axios.delete(`https://balanced-light-production-e602.up.railway.app/api/payments/${id}`);
       fetchPayments(); toast.success("Payment deleted");
     } catch (e) { toast.error("Something went wrong"); }
   }

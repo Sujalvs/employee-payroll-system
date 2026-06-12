@@ -31,12 +31,12 @@ function Overtime() {
   useEffect(() => { fetchEmployees(); fetchOvertime(); }, []);
 
   async function fetchEmployees() {
-    const r = await axios.get("http://https://balanced-light-production-e602.up.railway.app/api/employees");
+    const r = await axios.get("https://balanced-light-production-e602.up.railway.app/api/employees");
     setEmployees(r.data.filter((e) => e.status === "Active"));
   }
 
   async function fetchOvertime() {
-    const r = await axios.get("http://https://balanced-light-production-e602.up.railway.app/api/overtime");
+    const r = await axios.get("https://balanced-light-production-e602.up.railway.app/api/overtime");
     setRecords(r.data);
     // Build last rates map from existing records
     const map = {};
@@ -53,7 +53,7 @@ function Overtime() {
   async function saveOvertime() {
     try {
       if (!employeeId || !hours || !rate || !date) { toast.error("Please fill all fields"); return; }
-      await axios.post("http://https://balanced-light-production-e602.up.railway.app/api/overtime", { employeeId, hours, rate, date });
+      await axios.post("https://balanced-light-production-e602.up.railway.app/api/overtime", { employeeId, hours, rate, date });
       setLastRates((prev) => ({ ...prev, [employeeId]: rate }));
       setEmployeeId(""); setHours(""); setRate(""); setDate("");
       fetchOvertime(); toast.success("Overtime saved");
@@ -62,7 +62,7 @@ function Overtime() {
 
   async function deleteRecord(id) {
     if (!await confirmDialog("This overtime record will be deleted.")) return;
-    try { await axios.delete(`http://https://balanced-light-production-e602.up.railway.app/api/overtime/${id}`); fetchOvertime(); toast.success("Record deleted"); }
+    try { await axios.delete(`https://balanced-light-production-e602.up.railway.app/api/overtime/${id}`); fetchOvertime(); toast.success("Record deleted"); }
     catch (e) { toast.error("Something went wrong"); }
   }
 
