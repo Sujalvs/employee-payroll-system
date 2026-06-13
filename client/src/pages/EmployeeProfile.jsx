@@ -1,8 +1,8 @@
 import API from "../api.js";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "axios`;
-import { ArrowLeft } from `lucide-react`;
+import axios from "axios";
+import { ArrowLeft } from "lucide-react";
 
 function EmployeeProfile() {
   const { id } = useParams();
