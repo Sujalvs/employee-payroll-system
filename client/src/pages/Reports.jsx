@@ -1,347 +1,245 @@
 import API from "../api.js";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Printer } from "lucide-react";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
-const TABS = ["Payroll", "Attendance", "Advances", "Overtime", "Payments"];
 const MONTH_NAMES = ["","January","February","March","April","May","June","July","August","September","October","November","December"];
-
-const selectStyle = {
-  background: "var(--bg-surface)", color: "var(--text-primary)",
-  border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)",
-  padding: "9px 36px 9px 14px", fontSize: "14px", fontFamily: "inherit",
-  appearance: "none",
-  backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='https://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
-  backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
-};
+const TABS = ["Payroll","Attendance","Advances","Overtime","Payments"];
 
 function Reports() {
   const [activeTab, setActiveTab] = useState("Payroll");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [filterEmployee, setFilterEmployee] = useState("");
+  const [data, setData] = useState({ Payroll: [], Attendance: [], Advances: [], Overtime: [], Payments: [] });
 
-  // Employee filter applies to ALL tabs
-  const showEmployeeFilter = true;
-
-  useEffect(() => {
-    fetchEmployees();
-  }, []);
-
-  useEffect(() => {
-    setFilterEmployee(``); // reset employee filter when tab changes
-    fetchReport();
-  }, [activeTab, month, year]);
+  useEffect(() => { fetchEmployees(); }, []);
+  useEffect(() => { fetchData(); }, [activeTab, month, year]);
 
   async function fetchEmployees() {
+    try { const r = await axios.get(`${API}/api/employees`); setEmployees(r.data); }
+    catch (e) { console.log(e); }
+  }
+
+  async function fetchData() {
+    const endpoints = {
+      Payroll: `${API}/api/reports/payroll?month=${month}&year=${year}`,
+      Attendance: `${API}/api/reports/attendance?month=${month}&year=${year}`,
+      Advances: `${API}/api/reports/advances?month=${month}&year=${year}`,
+      Overtime: `${API}/api/reports/overtime?month=${month}&year=${year}`,
+      Payments: `${API}/api/reports/payments?month=${month}&year=${year}`,
+    };
     try {
-      const r = await axios.get(`${API}/api/employees`);
-      setEmployees(r.data);
+      const r = await axios.get(endpoints[activeTab]);
+      setData(prev => ({ ...prev, [activeTab]: r.data }));
     } catch (e) { console.log(e); }
   }
 
-  async function fetchReport() {
-    setLoading(true); setData([]);
-    try {
-      const r = await axios.get(`${API}/api/reports/${activeTab.toLowerCase()}?month=${month}&year=${year}`);
-      setData(r.data);
-    } catch (e) { console.log(e); }
-    setLoading(false);
-  }
-
-  // Apply employee filter on the frontend
-  // Payroll tab uses r.id and r.name; all other tabs use r.employeeId and r.employeeName
   const filteredData = filterEmployee
-    ? data.filter((r) =>
-        activeTab === "Payroll"
-          ? String(r.id) === filterEmployee
-          : String(r.employeeId || "") === filterEmployee
-      )
-    : data;
-
-  function getExcelRows() {
-    const d = filteredData;
-    if (activeTab === "Payroll") return d.map((r) => ({ Employee: r.name, Department: r.department, "Daily Wage": r.wage, "Present Days": r.presentDays, "Gross Salary": r.grossSalary, Overtime: r.totalOvertime, Advances: r.totalAdvance, "Net Salary": r.netSalary, "Total Paid": r.totalPaid, Remaining: r.remaining, "Excess Paid": r.excess }));
-    if (activeTab === "Attendance") return d.map((r) => ({ Employee: r.employeeName, Department: r.department, Date: r.date, Status: r.status }));
-    if (activeTab === "Advances") return d.map((r) => ({ Employee: r.employeeName, Department: r.department, Amount: r.amount, Reason: r.reason || "", Date: r.date }));
-    if (activeTab === "Overtime") return d.map((r) => ({ Employee: r.employeeName, Department: r.department, Hours: r.hours, "Rate/Hr": r.rate, Amount: r.amount, Date: r.date }));
-    if (activeTab === "Payments") return d.map((r) => ({ Employee: r.employeeName, Department: r.department, Amount: r.amount, Note: r.note || "", Date: r.date }));
-    return [];
-  }
+    ? data[activeTab].filter(r => String(r.id) === filterEmployee || String(r.employeeId) === filterEmployee)
+    : data[activeTab];
 
   function exportExcel() {
-    const ws = XLSX.utils.json_to_sheet(getExcelRows());
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, activeTab);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filteredData), activeTab);
     const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : "";
-    const suffix = empName ? `_${empName.replace(/ /g,"_")}` : "";
+    const suffix = empName ? "_" + empName.replace(/ /g, "_") : "";
     saveAs(new Blob([buf], { type: "application/octet-stream" }), `${activeTab}_${MONTH_NAMES[month]}_${year}${suffix}.xlsx`);
   }
 
   function exportPDF() {
     const doc = new jsPDF({ orientation: "landscape" });
     const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : "";
-    const title = `${activeTab} Report — ${MONTH_NAMES[month]} ${year}${empName ? ` — ${empName}` : ""}`;
+    const pageW = doc.internal.pageSize.getWidth();
+
+    doc.setFillColor(249, 112, 32);
+    doc.rect(0, 0, pageW, 22, "F");
+    doc.setTextColor(255, 255, 255);
     doc.setFontSize(13);
-    doc.text(title, 14, 15);
+    doc.setFont("helvetica", "bold");
+    doc.text("KSHETHROPASANA", 14, 10);
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.text("TEMPLE CONSTRUCTION", 14, 16);
+
+    const reportLabel = activeTab.toUpperCase() + " REPORT";
+    const periodLabel = MONTH_NAMES[month] + " " + year + (empName ? "  |  " + empName.toUpperCase() : "");
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text(reportLabel, pageW - 10, 10, { align: "right" });
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "normal");
+    doc.text(periodLabel, pageW - 10, 16, { align: "right" });
+
     let head = [], body = [];
     const d = filteredData;
-    if (activeTab === "Payroll") { head = [["Employee","Dept","Wage","Days","Gross","OT","Adv","Net","Paid","Remaining","Excess"]]; body = d.map((r) => [r.name, r.department, r.wage, r.presentDays, r.grossSalary, r.totalOvertime, r.totalAdvance, r.netSalary, r.totalPaid, r.remaining, r.excess]); }
-    else if (activeTab === "Attendance") { head = [["Employee","Department","Date","Status"]]; body = d.map((r) => [r.employeeName, r.department, r.date, r.status]); }
-    else if (activeTab === "Advances") { head = [["Employee","Department","Amount","Reason","Date"]]; body = d.map((r) => [r.employeeName, r.department, r.amount, r.reason || "", r.date]); }
-    else if (activeTab === "Overtime") { head = [["Employee","Department","Hours","Rate/Hr","Amount","Date"]]; body = d.map((r) => [r.employeeName, r.department, r.hours, r.rate, r.amount, r.date]); }
-    else if (activeTab === "Payments") { head = [["Employee","Department","Amount","Note","Date"]]; body = d.map((r) => [r.employeeName, r.department, r.amount, r.note || "", r.date]); }
-    autoTable(doc, { startY: 24, head, body, styles: { fontSize: 9 }, headStyles: { fillColor: [10, 132, 255] } });
-    doc.save(`${activeTab}_${MONTH_NAMES[month]}_${year}${empName ? `_${empName.replace(/ /g,"_")}` : ""}.pdf`);
+    if (activeTab === "Payroll") {
+      head = [["Employee","Dept","Wage/Day","Days","Gross","Overtime","Advances","Net Salary","Total Paid","Remaining","Excess"]];
+      body = d.map(r => [r.name, r.department, "Rs." + r.wage, r.presentDays, "Rs." + r.grossSalary, "Rs." + r.totalOvertime, "Rs." + r.totalAdvance, "Rs." + r.netSalary, "Rs." + r.totalPaid, r.remaining > 0 ? "Rs." + r.remaining : "-", r.excess > 0 ? "Rs." + r.excess : "-"]);
+    } else if (activeTab === "Attendance") {
+      head = [["Employee","Department","Date","Status"]];
+      body = d.map(r => [r.employeeName, r.department, r.date, r.status]);
+    } else if (activeTab === "Advances") {
+      head = [["Employee","Department","Amount","Reason","Date"]];
+      body = d.map(r => [r.employeeName, r.department, "Rs." + r.amount, r.reason || "-", r.date]);
+    } else if (activeTab === "Overtime") {
+      head = [["Employee","Department","Hours","Rate/Hr","Amount","Date"]];
+      body = d.map(r => [r.employeeName, r.department, r.hours, "Rs." + r.rate, "Rs." + r.amount, r.date]);
+    } else if (activeTab === "Payments") {
+      head = [["Employee","Department","Amount","Category","Note","Date"]];
+      body = d.map(r => [r.employeeName, r.department, "Rs." + r.amount, r.category || "-", r.note || "-", r.date]);
+    }
+
+    autoTable(doc, {
+      startY: 28, head, body,
+      styles: { fontSize: 8.5, cellPadding: 4, textColor: [30, 30, 30] },
+      headStyles: { fillColor: [30, 30, 30], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      didDrawPage: (data) => {
+        const pageH = doc.internal.pageSize.getHeight();
+        doc.setFillColor(249, 112, 32);
+        doc.rect(0, pageH - 10, pageW, 10, "F");
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(7);
+        doc.text("Kshethropasana Payroll Management System", 10, pageH - 3.5);
+        doc.text("Page " + data.pageNumber, pageW - 10, pageH - 3.5, { align: "right" });
+      },
+    });
+
+    const suffix = empName ? "_" + empName.replace(/ /g, "_") : "";
+    doc.save(`${activeTab}_${MONTH_NAMES[month]}_${year}${suffix}.pdf`);
   }
 
   function printReport() {
     const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : "All Employees";
-    const title = `${activeTab} Report — ${MONTH_NAMES[month]} ${year} — ${empName}`;
     const d = filteredData;
-
     let headers = [], rows = [];
     if (activeTab === "Payroll") {
-      headers = ["Employee","Department","Wage","Days","Gross","Overtime","Advances","Net Salary","Total Paid","Remaining","Excess"];
-      rows = d.map(r => [r.name, r.department, `₹${r.wage}`, r.presentDays, `₹${r.grossSalary}`, `₹${r.totalOvertime}`, `₹${r.totalAdvance}`, `₹${r.netSalary}`, `₹${r.totalPaid}`, r.remaining > 0 ? `₹${r.remaining}` : "—", r.excess > 0 ? `₹${r.excess}` : "—"]);
+      headers = ["Employee","Department","Wage/Day","Days","Gross","Overtime","Advances","Net Salary","Total Paid","Remaining","Excess"];
+      rows = d.map(r => [r.name, r.department, "Rs." + r.wage, r.presentDays, "Rs." + r.grossSalary, "Rs." + r.totalOvertime, "Rs." + r.totalAdvance, "Rs." + r.netSalary, "Rs." + r.totalPaid, r.remaining > 0 ? "Rs." + r.remaining : "-", r.excess > 0 ? "Rs." + r.excess : "-"]);
     } else if (activeTab === "Attendance") {
       headers = ["Employee","Department","Date","Status"];
       rows = d.map(r => [r.employeeName, r.department, r.date, r.status]);
     } else if (activeTab === "Advances") {
       headers = ["Employee","Department","Amount","Reason","Date"];
-      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}`, r.reason || "—", r.date]);
+      rows = d.map(r => [r.employeeName, r.department, "Rs." + r.amount, r.reason || "-", r.date]);
     } else if (activeTab === "Overtime") {
       headers = ["Employee","Department","Hours","Rate/Hr","Amount","Date"];
-      rows = d.map(r => [r.employeeName, r.department, r.hours, `₹${r.rate}`, `₹${r.amount}`, r.date]);
+      rows = d.map(r => [r.employeeName, r.department, r.hours, "Rs." + r.rate, "Rs." + r.amount, r.date]);
     } else if (activeTab === "Payments") {
-      headers = ["Employee","Department","Amount","Note","Date"];
-      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}`, r.note || "—", r.date]);
+      headers = ["Employee","Department","Amount","Category","Note","Date"];
+      rows = d.map(r => [r.employeeName, r.department, "Rs." + r.amount, r.category || "-", r.note || "-", r.date]);
     }
 
-    const tableRows = rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("");
-    const tableHeaders = headers.map(h => `<th>${h}</th>`).join("");
+    const tableRows = rows.map(row => "<tr>" + row.map(cell => "<td>" + cell + "</td>").join("") + "</tr>").join("");
+    const tableHeaders = headers.map(h => "<th>" + h + "</th>").join("");
+    const generatedOn = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    const title = activeTab + " Report - " + MONTH_NAMES[month] + " " + year + " - " + empName;
 
     const win = window.open("", "_blank");
-    win.document.write(`
-      <!DOCTYPE html><html><head><title>${title}</title>
-      <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif; color: #111; padding: 32px; }
-        h1 { font-size: 20px; margin-bottom: 4px; }
-        p { color: #666; font-size: 13px; margin-bottom: 24px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th { background: #f4f4f5; padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e4e4e7; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #71717a; }
-        td { padding: 10px 12px; border-bottom: 1px solid #f4f4f5; }
-        tr:last-child td { border-bottom: none; }
-        @media print { body { padding: 0; } }
-      </style></head>
-      <body>
-        <h1>${title}</h1>
-        <p>Generated on ${new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-        <table><thead><tr>${tableHeaders}</tr></thead><tbody>${tableRows}</tbody></table>
-        <script>window.onload = () => { window.print(); }<\/script>
-      </body></html>
-    `);
+    win.document.write("<!DOCTYPE html><html><head><title>" + title + "</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,sans-serif;color:#111}.header{background:#f97020;padding:18px 32px;display:flex;align-items:center;justify-content:space-between}.company-name{color:#fff;font-size:18px;font-weight:700}.company-sub{color:rgba(255,255,255,0.75);font-size:11px;margin-top:2px}.report-type{color:#fff;font-size:14px;font-weight:700;text-align:right}.report-period{color:rgba(255,255,255,0.8);font-size:11px;text-align:right;margin-top:3px}.content{padding:24px 32px}table{width:100%;border-collapse:collapse;font-size:12px}thead tr{background:#1c1c1e}th{padding:10px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;color:#fff}td{padding:10px 12px;border-bottom:1px solid #f0f0f0}tbody tr:nth-child(even){background:#fafafa}.footer{background:#f97020;padding:8px 32px;display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.85)}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>");
+    win.document.write("<div class='header'><div><div class='company-name'>Kshethropasana</div><div class='company-sub'>Temple Construction</div></div><div><div class='report-type'>" + activeTab + " Report</div><div class='report-period'>" + MONTH_NAMES[month] + " " + year + "</div></div></div>");
+    win.document.write("<div class='content'><table><thead><tr>" + tableHeaders + "</tr></thead><tbody>" + tableRows + "</tbody></table></div>");
+    win.document.write("<div class='footer'><span>Kshethropasana Payroll Management System</span><span>" + generatedOn + "</span></div>");
+    win.document.write("<script>window.onload=function(){window.print()}<\/script></body></html>");
     win.document.close();
   }
 
-  function renderSummary() {
-    const d = filteredData;
-    if (!d.length) return null;
-    if (activeTab === "Payroll") {
-      const totalNet = d.reduce((s, r) => s + r.netSalary, 0);
-      const totalPaid = d.reduce((s, r) => s + r.totalPaid, 0);
-      const totalRem = d.reduce((s, r) => s + r.remaining, 0);
-      return (
-        <div className="dashboard-cards" style={{ marginBottom: "20px" }}>
-          <div className="card"><h2>Employees</h2><h1>{d.length}</h1></div>
-          <div className="card"><h2>Total Net</h2><h1 style={{ color: "var(--green)", fontSize: "26px" }}>₹{totalNet.toLocaleString()}</h1></div>
-          <div className="card"><h2>Total Paid</h2><h1 style={{ color: "var(--accent)", fontSize: "26px" }}>₹{totalPaid.toLocaleString()}</h1></div>
-          <div className="card"><h2>Remaining</h2><h1 style={{ color: "var(--amber)", fontSize: "26px" }}>₹{totalRem.toLocaleString()}</h1></div>
-        </div>
-      );
-    }
-    if (activeTab === "Attendance") {
-      const present = d.filter((r) => r.status === "Present").length;
-      return (
-        <div className="dashboard-cards" style={{ marginBottom: "20px" }}>
-          <div className="card"><h2>Total Records</h2><h1>{d.length}</h1></div>
-          <div className="card"><h2>Present</h2><h1 style={{ color: "var(--green)" }}>{present}</h1></div>
-          <div className="card"><h2>Absent</h2><h1 style={{ color: "var(--red)" }}>{d.length - present}</h1></div>
-        </div>
-      );
-    }
-    if (activeTab === "Advances" || activeTab === "Payments") {
-      const total = d.reduce((s, r) => s + r.amount, 0);
-      return (
-        <div className="dashboard-cards" style={{ marginBottom: "20px" }}>
-          <div className="card"><h2>Total Records</h2><h1>{d.length}</h1></div>
-          <div className="card"><h2>Total Amount</h2><h1 style={{ color: activeTab === "Payments" ? "var(--green)" : "var(--amber)", fontSize: "26px" }}>₹{total.toLocaleString()}</h1></div>
-        </div>
-      );
-    }
-    if (activeTab === "Overtime") {
-      const totalHrs = d.reduce((s, r) => s + r.hours, 0);
-      const totalAmt = d.reduce((s, r) => s + r.amount, 0);
-      return (
-        <div className="dashboard-cards" style={{ marginBottom: "20px" }}>
-          <div className="card"><h2>Total Records</h2><h1>{d.length}</h1></div>
-          <div className="card"><h2>Total Hours</h2><h1 style={{ color: "var(--accent)" }}>{totalHrs}</h1></div>
-          <div className="card"><h2>Total Amount</h2><h1 style={{ color: "var(--green)", fontSize: "26px" }}>₹{totalAmt.toLocaleString()}</h1></div>
-        </div>
-      );
-    }
-    return null;
-  }
-
-  function renderTable() {
-    if (loading) return <p style={{ color: "var(--text-secondary)", padding: "40px 0", textAlign: "center" }}>Loading...</p>;
-    const d = filteredData;
-    if (!d.length) return <div className="table-container"><p className="empty-state">No data found</p></div>;
-
-    let headers = [], rows = null;
-    if (activeTab === "Payroll") {
-      headers = ["Employee","Dept","Wage","Days","Gross","OT","Advances","Net Salary","Total Paid","Remaining","Excess"];
-      rows = d.map((r) => (
-        <tr key={r.id}>
-          <td style={{ fontWeight: "600" }}>{r.name}</td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.department}</td>
-          <td>₹{r.wage}</td>
-          <td>{r.presentDays}</td>
-          <td>₹{r.grossSalary?.toLocaleString()}</td>
-          <td style={{ color: "var(--accent)" }}>₹{r.totalOvertime?.toLocaleString()}</td>
-          <td style={{ color: "var(--amber)" }}>₹{r.totalAdvance?.toLocaleString()}</td>
-          <td><span className={`badge ${r.netSalary >= 0 ? "badge-green" : "badge-red"}`}>₹{r.netSalary?.toLocaleString()}</span></td>
-          <td><span className="badge badge-blue">₹{r.totalPaid?.toLocaleString()}</span></td>
-          <td>{r.remaining > 0 ? <span className="badge badge-amber">₹{r.remaining?.toLocaleString()}</span> : <span style={{ color: "var(--text-tertiary)" }}>—</span>}</td>
-          <td>{r.excess > 0 ? <span className="badge badge-purple">₹{r.excess?.toLocaleString()}</span> : <span style={{ color: "var(--text-tertiary)" }}>—</span>}</td>
-        </tr>
-      ));
-    } else if (activeTab === "Attendance") {
-      headers = ["Employee","Department","Date","Status"];
-      rows = d.map((r) => (
-        <tr key={r.id}>
-          <td style={{ fontWeight: "500" }}>{r.employeeName}</td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.department}</td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.date}</td>
-          <td><span className={`badge ${r.status === "Present" ? "badge-green" : "badge-red"}`}>{r.status}</span></td>
-        </tr>
-      ));
-    } else if (activeTab === "Advances") {
-      headers = ["Employee","Department","Amount","Reason","Date"];
-      rows = d.map((r) => (
-        <tr key={r.id}>
-          <td style={{ fontWeight: "500" }}>{r.employeeName}</td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.department}</td>
-          <td><span className="badge badge-amber">₹{r.amount?.toLocaleString()}</span></td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.reason || "—"}</td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.date}</td>
-        </tr>
-      ));
-    } else if (activeTab === "Overtime") {
-      headers = ["Employee","Department","Hours","Rate/Hr","Amount","Date"];
-      rows = d.map((r) => (
-        <tr key={r.id}>
-          <td style={{ fontWeight: "500" }}>{r.employeeName}</td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.department}</td>
-          <td>{r.hours}</td>
-          <td>₹{r.rate}</td>
-          <td><span className="badge badge-blue">₹{r.amount?.toLocaleString()}</span></td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.date}</td>
-        </tr>
-      ));
-    } else if (activeTab === "Payments") {
-      headers = ["Employee","Department","Amount","Note","Date"];
-      rows = d.map((r) => (
-        <tr key={r.id}>
-          <td style={{ fontWeight: "500" }}>{r.employeeName}</td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.department}</td>
-          <td><span className="badge badge-green">₹{r.amount?.toLocaleString()}</span></td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.note || "—"}</td>
-          <td style={{ color: "var(--text-secondary)" }}>{r.date}</td>
-        </tr>
-      ));
-    }
-
-    return (
-      <div className="table-container" style={{ overflowX: "auto" }}>
-        <table className="employee-table">
-          <thead><tr>{headers.map((h) => <th key={h}>{h}</th>)}</tr></thead>
-          <tbody>{rows}</tbody>
-        </table>
-      </div>
-    );
-  }
+  const selectStyle = {
+    background: "var(--bg-surface)", color: "var(--text-primary)",
+    border: "1px solid var(--border-default)", borderRadius: "var(--radius-md)",
+    padding: "10px 36px 10px 14px", fontSize: "14px", fontFamily: "inherit",
+    appearance: "none",
+    backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2386868b' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
+    backgroundRepeat: "no-repeat", backgroundPosition: "right 12px center",
+  };
 
   return (
     <>
       <div style={{ marginBottom: "32px" }}>
         <h1>Reports</h1>
-        <p className="dashboard-subtitle">View, filter and export your payroll data</p>
+        <p className="dashboard-subtitle">Monthly reports for all records</p>
       </div>
 
-      {/* Tabs */}
-      <div className="tab-bar">
-        {TABS.map((tab) => (
+      <div className="tab-bar" style={{ marginBottom: "24px" }}>
+        {TABS.map(tab => (
           <button key={tab} className={`tab-btn ${activeTab === tab ? "active" : ""}`} onClick={() => setActiveTab(tab)}>
             {tab}
           </button>
         ))}
       </div>
 
-      {/* Filters row */}
-      <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "24px", flexWrap: "wrap" }}>
-        {/* Month */}
-        <select value={month} onChange={(e) => setMonth(e.target.value)} style={selectStyle}>
+      <div style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap", alignItems: "center" }}>
+        <select value={month} onChange={e => setMonth(e.target.value)} style={selectStyle}>
           {MONTH_NAMES.slice(1).map((n, i) => <option key={i+1} value={i+1}>{n}</option>)}
         </select>
-
-        {/* Year */}
-        <select value={year} onChange={(e) => setYear(e.target.value)} style={selectStyle}>
-          {Array.from({ length: 20 }, (_, i) => { const y = new Date().getFullYear() - 5 + i; return <option key={y} value={y}>{y}</option>; })}
+        <select value={year} onChange={e => setYear(e.target.value)} style={selectStyle}>
+          {Array.from({ length: 10 }, (_, i) => { const y = new Date().getFullYear() - 3 + i; return <option key={y} value={y}>{y}</option>; })}
         </select>
-
-        {/* Employee filter — all tabs */}
-        <select value={filterEmployee} onChange={(e) => setFilterEmployee(e.target.value)} style={{ ...selectStyle, minWidth: "200px", borderColor: filterEmployee ? "var(--accent)" : "var(--border-default)", boxShadow: filterEmployee ? "0 0 0 3px var(--accent-glow)" : "none" }}>
+        <select value={filterEmployee} onChange={e => setFilterEmployee(e.target.value)} style={{ ...selectStyle, minWidth: "180px" }}>
           <option value="">All Employees</option>
-          {employees.map((emp) => (
-            <option key={emp.id} value={String(emp.id)}>{emp.name}</option>
-          ))}
+          {employees.map(emp => <option key={emp.id} value={String(emp.id)}>{emp.name}</option>)}
         </select>
-
-        {/* Export + Print */}
+        {filterEmployee && <button onClick={() => setFilterEmployee("")} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>Clear</button>}
         <div style={{ marginLeft: "auto", display: "flex", gap: "10px" }}>
-          <button className="secondary-btn" onClick={exportExcel}>Export Excel</button>
-          <button className="delete-btn" style={{ background: "rgba(255,69,58,0.12)", border: "1px solid rgba(255,69,58,0.2)" }} onClick={exportPDF}>Export PDF</button>
-          <button
-            className="secondary-btn"
-            onClick={printReport}
-            style={{ display: "flex", alignItems: "center", gap: "6px" }}
-          >
-            <Printer size={14} />
-            Print
-          </button>
+          <button className="secondary-btn" onClick={exportExcel} style={{ fontSize: "13px" }}>Export Excel</button>
+          <button className="delete-btn" style={{ background: "rgba(255,69,58,0.12)", border: "1px solid rgba(255,69,58,0.2)", fontSize: "13px" }} onClick={exportPDF}>Export PDF</button>
+          <button className="add-btn" onClick={printReport} style={{ fontSize: "13px" }}>Print</button>
         </div>
       </div>
 
-      {/* Show active filter label */}
-      {filterEmployee && (
-        <div style={{ marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>Showing data for:</span>
-          <span className="badge badge-blue">{employees.find(e => String(e.id) === filterEmployee)?.name}</span>
-          <button onClick={() => setFilterEmployee("")} style={{ background: "none", border: "none", color: "var(--text-tertiary)", cursor: "pointer", fontSize: "12px", padding: "2px 6px" }}>✕ Clear</button>
-        </div>
-      )}
-
-      {renderSummary()}
-      {renderTable()}
+      <div className="table-container" style={{ overflowX: "auto" }}>
+        {activeTab === "Payroll" && (
+          <table className="employee-table">
+            <thead><tr><th>Employee</th><th>Dept</th><th>Wage</th><th>Days</th><th>Gross</th><th>OT</th><th>Advances</th><th>Net</th><th>Paid</th><th>Remaining</th><th>Excess</th></tr></thead>
+            <tbody>
+              {filteredData.length === 0 ? <tr><td colSpan={11} className="empty-state">No data</td></tr>
+              : filteredData.map((r, i) => <tr key={i}><td>{r.name}</td><td>{r.department}</td><td>Rs.{r.wage}</td><td>{r.presentDays}</td><td>Rs.{r.grossSalary?.toLocaleString()}</td><td>Rs.{r.totalOvertime?.toLocaleString()}</td><td>Rs.{r.totalAdvance?.toLocaleString()}</td><td><span className={`badge ${r.netSalary >= 0 ? "badge-green" : "badge-red"}`}>Rs.{r.netSalary?.toLocaleString()}</span></td><td>Rs.{r.totalPaid?.toLocaleString()}</td><td>{r.remaining > 0 ? "Rs." + r.remaining?.toLocaleString() : "-"}</td><td>{r.excess > 0 ? "Rs." + r.excess?.toLocaleString() : "-"}</td></tr>)}
+            </tbody>
+          </table>
+        )}
+        {activeTab === "Attendance" && (
+          <table className="employee-table">
+            <thead><tr><th>Employee</th><th>Department</th><th>Date</th><th>Status</th></tr></thead>
+            <tbody>
+              {filteredData.length === 0 ? <tr><td colSpan={4} className="empty-state">No data</td></tr>
+              : filteredData.map((r, i) => <tr key={i}><td>{r.employeeName}</td><td>{r.department}</td><td>{r.date}</td><td><span className={`badge ${r.status === "Present" ? "badge-green" : "badge-red"}`}>{r.status}</span></td></tr>)}
+            </tbody>
+          </table>
+        )}
+        {activeTab === "Advances" && (
+          <table className="employee-table">
+            <thead><tr><th>Employee</th><th>Department</th><th>Amount</th><th>Reason</th><th>Date</th></tr></thead>
+            <tbody>
+              {filteredData.length === 0 ? <tr><td colSpan={5} className="empty-state">No data</td></tr>
+              : filteredData.map((r, i) => <tr key={i}><td>{r.employeeName}</td><td>{r.department}</td><td>Rs.{r.amount?.toLocaleString()}</td><td>{r.reason || "-"}</td><td>{r.date}</td></tr>)}
+            </tbody>
+          </table>
+        )}
+        {activeTab === "Overtime" && (
+          <table className="employee-table">
+            <thead><tr><th>Employee</th><th>Department</th><th>Hours</th><th>Rate/Hr</th><th>Amount</th><th>Date</th></tr></thead>
+            <tbody>
+              {filteredData.length === 0 ? <tr><td colSpan={6} className="empty-state">No data</td></tr>
+              : filteredData.map((r, i) => <tr key={i}><td>{r.employeeName}</td><td>{r.department}</td><td>{r.hours}</td><td>Rs.{r.rate}</td><td>Rs.{r.amount?.toLocaleString()}</td><td>{r.date}</td></tr>)}
+            </tbody>
+          </table>
+        )}
+        {activeTab === "Payments" && (
+          <table className="employee-table">
+            <thead><tr><th>Employee</th><th>Department</th><th>Amount</th><th>Category</th><th>Note</th><th>Date</th></tr></thead>
+            <tbody>
+              {filteredData.length === 0 ? <tr><td colSpan={6} className="empty-state">No data</td></tr>
+              : filteredData.map((r, i) => <tr key={i}><td>{r.employeeName}</td><td>{r.department}</td><td>Rs.{r.amount?.toLocaleString()}</td><td>{r.category || "-"}</td><td>{r.note || "-"}</td><td>{r.date}</td></tr>)}
+            </tbody>
+          </table>
+        )}
+      </div>
     </>
   );
 }
