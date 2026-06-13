@@ -21,45 +21,19 @@ app.use(async (req, res, next) => {
 
 const pool = getPool();
 
-// Mount routes at both /api/X and /X so Vercel routing works either way
-const employeesRouter = require("./routes/employees")(pool);
-const attendanceRouter = require("./routes/attendance")(pool);
-const advancesRouter = require("./routes/advances")(pool);
-const overtimeRouter = require("./routes/overtime")(pool);
-const paymentsRouter = require("./routes/payments")(pool);
-const authRouter = require("./routes/auth")(pool);
-const dashboardRouter = require("./routes/dashboard")(pool);
-const payrollRouter = require("./routes/payroll")(pool);
-const reportsRouter = require("./routes/reports")(pool);
-const backupRouter = require("./routes/backup")(pool);
-const trashRouter = require("./routes/trash")(pool);
+app.use("/api/employees", require("./routes/employees")(pool));
+app.use("/api/attendance", require("./routes/attendance")(pool));
+app.use("/api/advances", require("./routes/advances")(pool));
+app.use("/api/overtime", require("./routes/overtime")(pool));
+app.use("/api/payments", require("./routes/payments")(pool));
+app.use("/api/auth", require("./routes/auth")(pool));
+app.use("/api/dashboard", require("./routes/dashboard")(pool));
+app.use("/api/payroll", require("./routes/payroll")(pool));
+app.use("/api/reports", require("./routes/reports")(pool));
+app.use("/api/backup", require("./routes/backup")(pool));
+app.use("/api/trash", require("./routes/trash")(pool));
 
-app.use("/api/employees", employeesRouter);
-app.use("/api/attendance", attendanceRouter);
-app.use("/api/advances", advancesRouter);
-app.use("/api/overtime", overtimeRouter);
-app.use("/api/payments", paymentsRouter);
-app.use("/api/auth", authRouter);
-app.use("/api/dashboard", dashboardRouter);
-app.use("/api/payroll", payrollRouter);
-app.use("/api/reports", reportsRouter);
-app.use("/api/backup", backupRouter);
-app.use("/api/trash", trashRouter);
-
-// Also mount without /api prefix in case Vercel strips it
-app.use("/employees", employeesRouter);
-app.use("/attendance", attendanceRouter);
-app.use("/advances", advancesRouter);
-app.use("/overtime", overtimeRouter);
-app.use("/payments", paymentsRouter);
-app.use("/auth", authRouter);
-app.use("/dashboard", dashboardRouter);
-app.use("/payroll", payrollRouter);
-app.use("/reports", reportsRouter);
-app.use("/backup", backupRouter);
-app.use("/trash", trashRouter);
-
-app.get("/", (req, res) => res.send("Payroll Backend Running"));
 app.get("/api", (req, res) => res.send("Payroll Backend Running"));
 
-module.exports = app;
+// Vercel serverless handler
+module.exports = (req, res) => app(req, res);
