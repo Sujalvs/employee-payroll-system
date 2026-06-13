@@ -82,7 +82,7 @@ function Reports() {
     XLSX.utils.book_append_sheet(wb, ws, activeTab);
     const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : "";
-    const suffix = empName ? `_${empName.replace(/ /g,"_")}" : "";
+    const suffix = empName ? `_${empName.replace(/ /g,"_")}` : "";
     saveAs(new Blob([buf], { type: "application/octet-stream" }), `${activeTab}_${MONTH_NAMES[month]}_${year}${suffix}.xlsx`);
   }
 

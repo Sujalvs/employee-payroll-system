@@ -193,12 +193,12 @@ function printPayslip(emp, month, year) {
           <div class="summary-box remaining">
             <div class="summary-label">Remaining Balance</div>
             <div class="summary-amount">₹${emp.remaining?.toLocaleString()}</div>
-          </div>" : ""}
+          </div>` : ""}
           ${emp.excess > 0 ? `
           <div class="summary-box excess">
             <div class="summary-label">Excess Paid</div>
             <div class="summary-amount">₹${emp.excess?.toLocaleString()}</div>
-          </div>" : ""}
+          </div>` : ""}
         </div>
 
       </div>

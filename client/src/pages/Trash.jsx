@@ -87,7 +87,7 @@ function Trash() {
     const d = JSON.parse(item.data);
     if (item.type === "employee") return (
       <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-        Dept: {d.department} · Wage: ₹{d.wage}{d.phone ? ` · Phone: ${d.phone}" : ""}
+        Dept: {d.department} · Wage: ₹{d.wage}{d.phone ? ` · Phone: ${d.phone}` : ""}
       </div>
     );
     if (item.type === "attendance") return (
@@ -97,7 +97,7 @@ function Trash() {
     );
     if (item.type === "advance") return (
       <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-        Amount: <span style={{ color: "var(--amber)" }}>₹{d.amount}</span> · Date: {d.date}{d.reason ? ` · ${d.reason}" : ""}
+        Amount: <span style={{ color: "var(--amber)" }}>₹{d.amount}</span> · Date: {d.date}{d.reason ? ` · ${d.reason}` : ""}
       </div>
     );
     if (item.type === "overtime") return (

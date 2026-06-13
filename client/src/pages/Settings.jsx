@@ -109,7 +109,7 @@ function Settings() {
       await axios.post(`${API}/api/auth/create-admin`, { username: newUsername, password: newPassword });
       setNewUsername(""); setNewPassword("");
       fetchAdmins();
-      toast.success("Admin "${newUsername}" created");
+      toast.success(`Admin "${newUsername}" created`);
     } catch (e) { toast.error(e.response?.data?.message || "Something went wrong"); }
   }
 
