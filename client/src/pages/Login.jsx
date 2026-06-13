@@ -41,7 +41,7 @@ function Login() {
         {/* Logo */}
         <div className="login-logo">
           <div style={{
-            background: "#e8650a",
+            background: "#f97020",
             borderRadius: "16px",
             padding: "12px 20px",
             marginBottom: "20px",
