@@ -18,52 +18,52 @@ async function confirmDialog(message) {
   return window.confirm(message);
 }
 
+const WORK_HOURS_PER_DAY = 8;
+
 function Overtime() {
   const [employees, setEmployees] = useState([]);
   const [records, setRecords] = useState([]);
   const [search, setSearch] = useState("");
   const [employeeId, setEmployeeId] = useState("");
   const [hours, setHours] = useState("");
-  const [rate, setRate] = useState("");
   const [date, setDate] = useState("");
-  // Map of employeeId -> last used rate
-  const [lastRates, setLastRates] = useState({});
+  const [autoRate, setAutoRate] = useState(0);
 
   useEffect(() => { fetchEmployees(); fetchOvertime(); }, []);
 
   async function fetchEmployees() {
     const r = await axios.get(`${API}/api/employees`);
-    setEmployees(r.data.filter((e) => e.status === `Active`));
+    setEmployees(r.data.filter((e) => e.status === "Active"));
   }
 
   async function fetchOvertime() {
     const r = await axios.get(`${API}/api/overtime`);
     setRecords(r.data);
-    // Build last rates map from existing records
-    const map = {};
-    r.data.forEach((rec) => { map[rec.employeeId] = rec.rate; });
-    setLastRates(map);
   }
 
-  // Auto-fill rate when employee selected
   function handleEmployeeChange(id) {
     setEmployeeId(id);
-    if (lastRates[id]) setRate(String(lastRates[id]));
+    if (!id) { setAutoRate(0); return; }
+    const emp = employees.find(e => String(e.id) === String(id));
+    if (emp) {
+      const rate = Math.round((emp.wage / WORK_HOURS_PER_DAY) * 100) / 100;
+      setAutoRate(rate);
+    }
   }
 
   async function saveOvertime() {
+    if (!employeeId || !hours || !date) { toast.error("Please fill all fields"); return; }
+    if (!autoRate) { toast.error("Could not calculate rate — employee wage missing"); return; }
     try {
-      if (!employeeId || !hours || !rate || !date) { toast.error(`Please fill all fields`); return; }
-      await axios.post(`${API}/api/overtime`, { employeeId, hours, rate, date });
-      setLastRates((prev) => ({ ...prev, [employeeId]: rate }));
-      setEmployeeId(""); setHours(""); setRate(""); setDate("");
+      await axios.post(`${API}/api/overtime`, { employeeId, hours, rate: autoRate, date });
+      setEmployeeId(""); setHours(""); setDate(""); setAutoRate(0);
       fetchOvertime(); toast.success("Overtime saved");
     } catch (e) { toast.error("Something went wrong"); }
   }
 
   async function deleteRecord(id) {
-    if (!await confirmDialog(`This overtime record will be deleted.`)) return;
-    try { await axios.delete(`${API}/api/overtime/${id}`); fetchOvertime(); toast.success(`Record deleted`); }
+    if (!await confirmDialog("This overtime record will be deleted.")) return;
+    try { await axios.delete(`${API}/api/overtime/${id}`); fetchOvertime(); toast.success("Record deleted"); }
     catch (e) { toast.error("Something went wrong"); }
   }
 
@@ -79,7 +79,7 @@ function Overtime() {
     <>
       <div style={{ marginBottom: "32px" }}>
         <h1>Overtime</h1>
-        <p className="dashboard-subtitle">Track extra hours — rate auto-fills from last entry per employee</p>
+        <p className="dashboard-subtitle">Rate is auto-calculated from employee wage ÷ 8 hrs</p>
       </div>
 
       <div className="form-panel">
@@ -89,19 +89,34 @@ function Overtime() {
             <option value="">Select employee</option>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.id}>
-                {emp.name}{lastRates[emp.id] ? ` (₹${lastRates[emp.id]}/hr)` : ""}
+                {emp.name} — ₹{Math.round(emp.wage / WORK_HOURS_PER_DAY)}/hr
               </option>
             ))}
           </select>
-          <input type="number" placeholder="Hours worked" value={hours} onChange={(e) => setHours(e.target.value)} />
-          <input type="number" placeholder="Rate per hour (₹)" value={rate} onChange={(e) => setRate(e.target.value)} />
+          <input type="number" placeholder="Hours worked" value={hours} onChange={(e) => setHours(e.target.value)} min="0.5" step="0.5" />
           <DatePicker value={date} onChange={setDate} placeholder="Select date" />
         </div>
-        {hours && rate && (
-          <p style={{ fontSize: "13px", color: "var(--green)", marginTop: "10px" }}>
-            Amount: ₹{(hours * rate).toLocaleString()}
-          </p>
+
+        {/* Rate info box */}
+        {autoRate > 0 && (
+          <div style={{
+            marginTop: "14px", padding: "12px 16px",
+            background: "rgba(10,132,255,0.08)", border: "1px solid rgba(10,132,255,0.2)",
+            borderRadius: "var(--radius-md)", display: "flex", gap: "24px", flexWrap: "wrap",
+          }}>
+            <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+              Rate: <strong style={{ color: "var(--accent)" }}>₹{autoRate}/hr</strong>
+              <span style={{ fontSize: "11px", color: "var(--text-tertiary)", marginLeft: "6px" }}>(auto from wage ÷ 8)</span>
+            </span>
+            {hours && (
+              <span style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
+                Total: <strong style={{ color: "var(--green)" }}>₹{(hours * autoRate).toLocaleString()}</strong>
+                <span style={{ fontSize: "11px", color: "var(--text-tertiary)", marginLeft: "6px" }}>({hours} hrs × ₹{autoRate})</span>
+              </span>
+            )}
+          </div>
         )}
+
         <div className="form-actions" style={{ marginTop: "16px" }}>
           <button className="add-btn" onClick={saveOvertime}>Save Overtime</button>
         </div>
