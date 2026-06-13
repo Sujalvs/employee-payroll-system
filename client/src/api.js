@@ -1,3 +1,2 @@
-// Vercel deployment - use relative URL (same domain, no CORS)
-const API = window.location.hostname === "localhost" ? "http://localhost:8000" : "";
+const API = "https://employee-payroll-system-production-9563.up.railway.app";
 export default API;
