@@ -79,6 +79,7 @@ function Overtime() {
     <>
       <div style={{ marginBottom: "32px" }}>
         <h1>Overtime</h1>
+         <p className="dashboard-subtitle">Record overtime of employees</p>
       </div>
 
       <div className="form-panel">
