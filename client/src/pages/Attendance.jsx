@@ -179,7 +179,7 @@ function Attendance() {
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "12px 16px", background: "var(--bg-hover)",
                 borderRadius: "var(--radius-md)",
-                border: `1px solid ${bulkStatuses[emp.id] === "Absent" ? "rgba(255,69,58,0.3)" : "rgba(48,209,88,0.2)"}",
+                border: `1px solid ${bulkStatuses[emp.id] === "Absent" ? "rgba(255,69,58,0.3)" : "rgba(48,209,88,0.2)"}`,
               }}>
                 <div>
                   <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "2px" }}>{emp.name}</p>

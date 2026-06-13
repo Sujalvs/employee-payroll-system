@@ -58,7 +58,7 @@ function Trash() {
   }
 
   async function deleteForever(item) {
-    if (!await confirmDialog("Permanently delete "${item.label}`? This cannot be undone.`, `Delete Forever`)) return;
+    if (!await confirmDialog(`Permanently delete "${item.label}"? This cannot be undone.`, "Delete Forever")) return;
     try {
       await axios.delete(`${API}/api/trash/${item.id}`);
       toast.success(`Permanently deleted`);

@@ -174,8 +174,8 @@ function printPayslip(emp, month, year) {
               <td>Gross Salary (${emp.presentDays} days × ₹${emp.wage})</td>
               <td>₹${emp.grossSalary?.toLocaleString()}</td>
             </tr>
-            ${emp.totalOvertime > 0 ? "<tr><td>Overtime</td><td style="color:#0a84ff">+ ₹${emp.totalOvertime?.toLocaleString()}</td></tr>" : ""}
-            ${emp.totalAdvance > 0 ? "<tr><td>Advance Deduction</td><td style="color:#ef4444">− ₹${emp.totalAdvance?.toLocaleString()}</td></tr>" : ""}
+            ${emp.totalOvertime > 0 ? `<tr><td>Overtime</td><td style='color:#0a84ff'>+ ₹${emp.totalOvertime?.toLocaleString()}</td></tr>` : ''}
+            ${emp.totalAdvance > 0 ? `<tr><td>Advance Deduction</td><td style='color:#ef4444'>− ₹${emp.totalAdvance?.toLocaleString()}</td></tr>` : ''}
             <tr class="total-row">
               <td>Net Salary</td>
               <td style="color:${emp.netSalary >= 0 ? "#16a34a" : "#dc2626"}">₹${emp.netSalary?.toLocaleString()}</td>
