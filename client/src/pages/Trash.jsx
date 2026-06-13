@@ -67,7 +67,7 @@ function Trash() {
   }
 
   async function emptyTrash() {
-    if (!await confirmDialog("Empty the entire trash? All items will be permanently deleted.`, `Empty Trash`)) return;
+    if (!await confirmDialog("Empty the entire trash? All items will be permanently deleted.`, `Empty Trash")) return;
     try {
       await axios.delete(`${API}/api/trash`);
       toast.success(`Trash emptied`);

@@ -25,7 +25,7 @@ function Overtime() {
   const [employeeId, setEmployeeId] = useState("");
   const [hours, setHours] = useState("");
   const [rate, setRate] = useState("");
-  const [date, setDate] = useState(``);
+  const [date, setDate] = useState("");
   // Map of employeeId -> last used rate
   const [lastRates, setLastRates] = useState({});
 
@@ -56,9 +56,9 @@ function Overtime() {
       if (!employeeId || !hours || !rate || !date) { toast.error(`Please fill all fields`); return; }
       await axios.post(`${API}/api/overtime`, { employeeId, hours, rate, date });
       setLastRates((prev) => ({ ...prev, [employeeId]: rate }));
-      setEmployeeId(`"); setHours(""); setRate(""); setDate("");
+      setEmployeeId(""); setHours(""); setRate(""); setDate("");
       fetchOvertime(); toast.success("Overtime saved");
-    } catch (e) { toast.error("Something went wrong`); }
+    } catch (e) { toast.error("Something went wrong"); }
   }
 
   async function deleteRecord(id) {

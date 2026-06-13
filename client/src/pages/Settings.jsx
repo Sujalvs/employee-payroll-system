@@ -74,7 +74,7 @@ function Settings() {
     setResetting(true);
     try {
       await axios.post(`${API}/api/backup/reset`, { resetPassword });
-      setResetPassword(`");
+      setResetPassword("");
       toast.success("System reset to default. All data cleared.", { duration: 5000 });
       fetchBackups();
     } catch (e) {
@@ -97,7 +97,7 @@ function Settings() {
       await axios.post(`${API}/api/auth/change-password`, {
         username: cpUsername, currentPassword: cpCurrent, newPassword: cpNew,
       });
-      setCpCurrent(`"); setCpNew(""); setCpConfirm("");
+      setCpCurrent(""); setCpNew(""); setCpConfirm("");
       toast.success("Password changed successfully");
     } catch (e) { toast.error(e.response?.data?.message || "Something went wrong"); }
   }
@@ -107,10 +107,10 @@ function Settings() {
     if (newPassword.length < 6) { toast.error(`Password must be at least 6 characters`); return; }
     try {
       await axios.post(`${API}/api/auth/create-admin`, { username: newUsername, password: newPassword });
-      setNewUsername(`"); setNewPassword("");
+      setNewUsername(""); setNewPassword("");
       fetchAdmins();
-      toast.success(`Admin "${newUsername}" created`);
-    } catch (e) { toast.error(e.response?.data?.message || "Something went wrong`); }
+      toast.success(`Admin "${newUsername}" created");
+    } catch (e) { toast.error(e.response?.data?.message || "Something went wrong"); }
   }
 
   async function deleteAdmin(id, username) {
@@ -174,7 +174,7 @@ function Settings() {
     }
 
     const confirmed = await confirmDialog(
-      `Restore from "${file.name}"? This will REPLACE all current data with the backup. A safety backup will be created first.`,
+      `Restore from "${file.name}"? This will REPLACE all current data with the backup. A safety backup will be created first.",
       "Yes, restore"
     );
     if (!confirmed) return;
@@ -211,7 +211,7 @@ function Settings() {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ot.data.map((o) => ({ Employee: o.employeeName, Hours: o.hours, Rate: o.rate, Amount: o.hours * o.rate, Date: o.date }))), "Overtime");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pmts.data.map((p) => ({ Employee: p.employeeName, Amount: p.amount, Note: p.note || "", Date: p.date }))), "Payments");
       const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-      saveAs(new Blob([buf], { type: "application/octet-stream" }), `Kshethropasana_Backup_${new Date().toISOString().split("T")[0]}.xlsx`);
+      saveAs(new Blob([buf], { type: "application/octet-stream" }), `Kshethropasana_Backup_${new Date().toISOString().split("T")[0]}.xlsx");
       toast.success("Excel export downloaded");
     } catch (e) { toast.error("Export failed"); }
   }
@@ -459,7 +459,7 @@ function Settings() {
             style={{
               background: resetPassword ? "rgba(255,69,58,0.15)" : "var(--bg-hover)",
               color: resetPassword ? "var(--red)" : "var(--text-tertiary)",
-              border: `1px solid ${resetPassword ? "rgba(255,69,58,0.35)" : "var(--border-subtle)"}`,
+              border: `1px solid ${resetPassword ? "rgba(255,69,58,0.35)" : "var(--border-subtle)"}",
               padding: "11px 22px", borderRadius: "var(--radius-md)",
               cursor: resetPassword && !resetting ? "pointer" : "not-allowed",
               fontSize: "14px", fontWeight: "600", fontFamily: "inherit",

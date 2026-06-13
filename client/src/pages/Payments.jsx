@@ -49,7 +49,7 @@ function Payments() {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState("");
-  const [category, setCategory] = useState(`Salary`);
+  const [category, setCategory] = useState(`Salary");
 
   useEffect(() => { fetchEmployees(); fetchPayments(); }, []);
 
@@ -67,9 +67,9 @@ function Payments() {
     try {
       if (!employeeId || !amount || !date) { toast.error(`Please fill all required fields`); return; }
       await axios.post(`${API}/api/payments`, { employeeId, amount, note, date, category });
-      setEmployeeId(`"); setAmount(""); setNote(""); setDate(""); setCategory("Salary");
+      setEmployeeId(""); setAmount(""); setNote(""); setDate(""); setCategory("Salary");
       fetchPayments(); toast.success("Payment saved");
-    } catch (e) { toast.error("Something went wrong`); }
+    } catch (e) { toast.error("Something went wrong"); }
   }
 
   async function deletePayment(id) {
