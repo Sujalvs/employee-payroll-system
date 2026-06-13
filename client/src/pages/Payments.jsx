@@ -1,3 +1,4 @@
+import API from "../api.js";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -53,29 +54,29 @@ function Payments() {
   useEffect(() => { fetchEmployees(); fetchPayments(); }, []);
 
   async function fetchEmployees() {
-    const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/employees");
+    const r = await axios.get(`${API}/api/employees`);
     setEmployees(r.data.filter((e) => e.status === "Active"));
   }
 
   async function fetchPayments() {
-    const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/payments");
+    const r = await axios.get(`${API}/api/payments`);
     setPayments(r.data);
   }
 
   async function savePayment() {
     try {
       if (!employeeId || !amount || !date) { toast.error("Please fill all required fields"); return; }
-      await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/payments", { employeeId, amount, note, date, category });
+      await axios.post(`${API}/api/payments`, { employeeId, amount, note, date, category });
       setEmployeeId(""); setAmount(""); setNote(""); setDate(""); setCategory("Salary");
       fetchPayments(); toast.success("Payment saved");
     } catch (e) { toast.error("Something went wrong"); }
   }
 
   async function deletePayment(id) {
-    if (!await confirmDialog("This payment record will be deleted.")) return;
+    if (!await confirmDialog("This payment record will be deleted.`)) return;
     try {
-      await axios.delete(`https://employee-payroll-system-production-9563.up.railway.app/api/payments/${id}`);
-      fetchPayments(); toast.success("Payment deleted");
+      await axios.delete(`${API}/api/payments/${id}`);
+      fetchPayments(); toast.success(`Payment deleted");
     } catch (e) { toast.error("Something went wrong"); }
   }
 

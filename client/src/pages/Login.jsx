@@ -1,3 +1,4 @@
+import API from "../api.js";
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -16,7 +17,7 @@ function Login() {
 
     try {
       const response = await axios.post(
-        "https://employee-payroll-system-production-9563.up.railway.app/api/auth/login",
+        `${API}/api/auth/login`,
         { username, password }
       );
 

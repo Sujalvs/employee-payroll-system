@@ -1,3 +1,4 @@
+import API from "../api.js";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Users, UserCheck, UserX, BadgeIndianRupee, Wallet, Clock3, CreditCard, X, Phone, AlertCircle } from "lucide-react";
@@ -110,12 +111,12 @@ function Dashboard() {
   useEffect(() => { fetchDashboard(); fetchChartData(); }, []);
 
   async function fetchDashboard() {
-    try { const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/dashboard"); setStats(r.data); }
+    try { const r = await axios.get(`${API}/api/dashboard`); setStats(r.data); }
     catch (e) { console.log(e); }
   }
 
   async function fetchChartData() {
-    try { const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/dashboard/chart"); setChartData(r.data); }
+    try { const r = await axios.get(`${API}/api/dashboard/chart`); setChartData(r.data); }
     catch (e) { console.log(e); }
   }
 
@@ -130,9 +131,9 @@ function Dashboard() {
     try {
       let endpoint;
       if (type === "present") endpoint = `present-on/${date}`;
-      else if (type === "absent") endpoint = `absent-on/${date}`;
+      else if (type === "absent`) endpoint = `absent-on/${date}`;
       else endpoint = `not-marked-on/${date}`;
-      const r = await axios.get(`https://employee-payroll-system-production-9563.up.railway.app/api/employees/${endpoint}`);
+      const r = await axios.get(`${API}/api/employees/${endpoint}`);
       setModalEmployees(r.data);
     } catch (e) { console.log(e); }
   }
@@ -142,7 +143,7 @@ function Dashboard() {
     await loadModalData(modal, newDate);
   }
 
-  const currentMonth = new Date().toLocaleString("default", { month: "long", year: "numeric" });
+  const currentMonth = new Date().toLocaleString(`default", { month: "long", year: "numeric" });
 
   return (
     <>

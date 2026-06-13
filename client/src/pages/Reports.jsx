@@ -1,3 +1,4 @@
+import API from "../api.js";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
@@ -41,7 +42,7 @@ function Reports() {
 
   async function fetchEmployees() {
     try {
-      const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/employees");
+      const r = await axios.get(`${API}/api/employees`);
       setEmployees(r.data);
     } catch (e) { console.log(e); }
   }
@@ -49,7 +50,7 @@ function Reports() {
   async function fetchReport() {
     setLoading(true); setData([]);
     try {
-      const r = await axios.get(`https://employee-payroll-system-production-9563.up.railway.app/api/reports/${activeTab.toLowerCase()}?month=${month}&year=${year}`);
+      const r = await axios.get(`${API}/api/reports/${activeTab.toLowerCase()}?month=${month}&year=${year}`);
       setData(r.data);
     } catch (e) { console.log(e); }
     setLoading(false);

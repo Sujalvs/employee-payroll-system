@@ -1,3 +1,4 @@
+import API from "../api.js";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -36,13 +37,13 @@ function Attendance() {
   useEffect(() => { fetchAttendance(); fetchEmployees(); }, []);
 
   async function fetchAttendance() {
-    try { const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/attendance"); setRecords(r.data); }
+    try { const r = await axios.get(`${API}/api/attendance`); setRecords(r.data); }
     catch (e) { console.log(e); }
   }
 
   async function fetchEmployees() {
     try {
-      const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/employees");
+      const r = await axios.get(`${API}/api/employees`);
       const active = r.data.filter((e) => e.status === "Active");
       setEmployees(active);
       // Init bulk statuses
@@ -55,12 +56,12 @@ function Attendance() {
   function clearForm() { setEmployee(""); setDate(""); setStatus("Present"); setEditingId(null); }
 
   async function saveAttendance() {
-    if (!employee || !date) { toast.error("Please fill all fields"); return; }
+    if (!employee || !date) { toast.error("Please fill all fields`); return; }
     try {
       if (editingId) {
-        await axios.put(`https://employee-payroll-system-production-9563.up.railway.app/api/attendance/${editingId}`, { employeeId: employee, date, status });
+        await axios.put(`${API}/api/attendance/${editingId}`, { employeeId: employee, date, status });
       } else {
-        await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/attendance", { employeeId: employee, date, status });
+        await axios.post(`${API}/api/attendance", { employeeId: employee, date, status });
       }
       fetchAttendance(); clearForm();
       toast.success(editingId ? "Attendance updated" : "Attendance saved");
@@ -75,7 +76,7 @@ function Attendance() {
       status: bulkStatuses[emp.id] || "Present",
     }));
     try {
-      await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/attendance/bulk", { records });
+      await axios.post(`${API}/api/attendance/bulk`, { records });
       fetchAttendance();
       toast.success(`Attendance saved for ${records.length} employees`);
     } catch (e) { toast.error("Something went wrong"); }
@@ -95,10 +96,10 @@ function Attendance() {
   }
 
   async function deleteRecord(id) {
-    if (!await confirmDialog("This attendance record will be deleted.")) return;
+    if (!await confirmDialog("This attendance record will be deleted.`)) return;
     try {
-      await axios.delete(`https://employee-payroll-system-production-9563.up.railway.app/api/attendance/${id}`);
-      fetchAttendance(); toast.success("Record deleted");
+      await axios.delete(`${API}/api/attendance/${id}`);
+      fetchAttendance(); toast.success(`Record deleted");
       if (editingId === id) clearForm();
     } catch (e) { console.log(e); }
   }

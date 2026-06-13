@@ -1,7 +1,8 @@
+import API from "../api.js";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react`;
 
 function EmployeeProfile() {
   const { id } = useParams();
@@ -16,27 +17,27 @@ function EmployeeProfile() {
   }, []);
 
   async function fetchEmployee() {
-    try { const r = await axios.get(`https://employee-payroll-system-production-9563.up.railway.app/api/employees/${id}`); setEmployee(r.data); }
+    try { const r = await axios.get(`${API}/api/employees/${id}`); setEmployee(r.data); }
     catch (e) { console.log(e); }
   }
   async function fetchAttendance() {
-    try { const r = await axios.get(`https://employee-payroll-system-production-9563.up.railway.app/api/attendance/employee/${id}`); setAttendance(r.data); }
+    try { const r = await axios.get(`${API}/api/attendance/employee/${id}`); setAttendance(r.data); }
     catch (e) { console.log(e); }
   }
   async function fetchAdvances() {
-    try { const r = await axios.get(`https://employee-payroll-system-production-9563.up.railway.app/api/advances/employee/${id}`); setAdvances(r.data); }
+    try { const r = await axios.get(`${API}/api/advances/employee/${id}`); setAdvances(r.data); }
     catch (e) { console.log(e); }
   }
   async function fetchOvertime() {
-    try { const r = await axios.get(`https://employee-payroll-system-production-9563.up.railway.app/api/overtime/employee/${id}`); setOvertime(r.data); }
+    try { const r = await axios.get(`${API}/api/overtime/employee/${id}`); setOvertime(r.data); }
     catch (e) { console.log(e); }
   }
   async function fetchPayments() {
-    try { const r = await axios.get(`https://employee-payroll-system-production-9563.up.railway.app/api/payments/employee/${id}`); setPayments(r.data); }
+    try { const r = await axios.get(`${API}/api/payments/employee/${id}`); setPayments(r.data); }
     catch (e) { console.log(e); }
   }
 
-  if (!employee) return <p style={{ color: "var(--text-secondary)", padding: "40px" }}>Loading...</p>;
+  if (!employee) return <p style={{ color: `var(--text-secondary)", padding: "40px" }}>Loading...</p>;
 
   const presentDays = attendance.filter((a) => a.status === "Present").length;
   const grossSalary = presentDays * employee.wage;

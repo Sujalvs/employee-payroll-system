@@ -1,3 +1,4 @@
+import API from "../api.js";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Printer } from "lucide-react";
@@ -218,13 +219,13 @@ function Payroll() {
   const [payroll, setPayroll] = useState([]);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [filterEmployee, setFilterEmployee] = useState("");
+  const [filterEmployee, setFilterEmployee] = useState("`);
 
   useEffect(() => { fetchPayroll(); }, [month, year]);
 
   async function fetchPayroll() {
     try {
-      const r = await axios.get(`https://employee-payroll-system-production-9563.up.railway.app/api/payroll?month=${month}&year=${year}`);
+      const r = await axios.get(`${API}/api/payroll?month=${month}&year=${year}`);
       setPayroll(r.data);
     } catch (e) { console.log(e); }
   }
@@ -237,7 +238,7 @@ function Payroll() {
 
   return (
     <>
-      <div style={{ marginBottom: "32px" }}>
+      <div style={{ marginBottom: `32px" }}>
         <h1>Payroll</h1>
         <p className="dashboard-subtitle">Monthly salary calculation and payment tracking</p>
       </div>

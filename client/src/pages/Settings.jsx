@@ -1,3 +1,4 @@
+import API from "../api.js";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -72,7 +73,7 @@ function Settings() {
 
     setResetting(true);
     try {
-      await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/backup/reset", { resetPassword });
+      await axios.post(`${API}/api/backup/reset`, { resetPassword });
       setResetPassword("");
       toast.success("System reset to default. All data cleared.", { duration: 5000 });
       fetchBackups();
@@ -84,7 +85,7 @@ function Settings() {
 
   // ── Admins ────────────────────────────────────────────
   async function fetchAdmins() {
-    try { const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/auth/admins"); setAdmins(r.data); }
+    try { const r = await axios.get(`${API}/api/auth/admins`); setAdmins(r.data); }
     catch (e) { console.log(e); }
   }
 
@@ -93,7 +94,7 @@ function Settings() {
     if (cpNew !== cpConfirm) { toast.error("New passwords do not match"); return; }
     if (cpNew.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     try {
-      await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/auth/change-password", {
+      await axios.post(`${API}/api/auth/change-password`, {
         username: cpUsername, currentPassword: cpCurrent, newPassword: cpNew,
       });
       setCpCurrent(""); setCpNew(""); setCpConfirm("");
@@ -105,7 +106,7 @@ function Settings() {
     if (!newUsername || !newPassword) { toast.error("Please fill username and password"); return; }
     if (newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     try {
-      await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/auth/create-admin", { username: newUsername, password: newPassword });
+      await axios.post(`${API}/api/auth/create-admin`, { username: newUsername, password: newPassword });
       setNewUsername(""); setNewPassword("");
       fetchAdmins();
       toast.success(`Admin "${newUsername}" created`);
@@ -113,27 +114,27 @@ function Settings() {
   }
 
   async function deleteAdmin(id, username) {
-    if (!await confirmDialog(`Delete admin "${username}"?`)) return;
+    if (!await confirmDialog(`Delete admin "${username}`?`)) return;
     try {
-      await axios.delete(`https://employee-payroll-system-production-9563.up.railway.app/api/auth/admins/${id}`);
-      fetchAdmins(); toast.success("Admin deleted");
+      await axios.delete(`${API}/api/auth/admins/${id}`);
+      fetchAdmins(); toast.success(`Admin deleted");
     } catch (e) { toast.error(e.response?.data?.message || "Cannot delete this admin"); }
   }
 
   // ── Backup ────────────────────────────────────────────
   async function fetchBackups() {
-    try { const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/backup/list"); setBackups(r.data); }
+    try { const r = await axios.get(`${API}/api/backup/list`); setBackups(r.data); }
     catch (e) { console.log(e); }
   }
 
   async function fetchBackupSettings() {
-    try { const r = await axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/backup/settings"); setBackupSettings(r.data); }
+    try { const r = await axios.get(`${API}/api/backup/settings`); setBackupSettings(r.data); }
     catch (e) { console.log(e); }
   }
 
   async function saveBackupSettings(updated) {
     try {
-      await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/backup/settings", updated);
+      await axios.post(`${API}/api/backup/settings`, updated);
       setBackupSettings(updated);
       toast.success(updated.autoBackup ? "Auto backup enabled — runs daily at 2:00 AM" : "Auto backup disabled");
     } catch (e) { toast.error("Failed to save settings"); }
@@ -142,22 +143,22 @@ function Settings() {
   async function createManualBackup() {
     setCreatingBackup(true);
     try {
-      const r = await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/backup/create");
+      const r = await axios.post(`${API}/api/backup/create`);
       toast.success("Backup created: " + r.data.backup.filename);
       fetchBackups();
-    } catch (e) { toast.error(e.response?.data?.message || "Backup failed"); }
+    } catch (e) { toast.error(e.response?.data?.message || "Backup failed`); }
     setCreatingBackup(false);
   }
 
   function downloadBackup(filename) {
-    window.open(`https://employee-payroll-system-production-9563.up.railway.app/api/backup/download/${filename}`, "_blank");
+    window.open(`${API}/api/backup/download/${filename}`, `_blank");
   }
 
   async function deleteBackup(filename) {
-    if (!await confirmDialog(`Delete backup "${filename}"?`, "Yes, delete")) return;
+    if (!await confirmDialog(`Delete backup "${filename}"?`, "Yes, delete`)) return;
     try {
-      await axios.delete(`https://employee-payroll-system-production-9563.up.railway.app/api/backup/${filename}`);
-      toast.success("Backup deleted");
+      await axios.delete(`${API}/api/backup/${filename}`);
+      toast.success(`Backup deleted");
       fetchBackups();
     } catch (e) { toast.error("Failed to delete backup"); }
   }
@@ -182,7 +183,7 @@ function Settings() {
     try {
       const formData = new FormData();
       formData.append("backup", file);
-      const r = await axios.post("https://employee-payroll-system-production-9563.up.railway.app/api/backup/restore", formData, {
+      const r = await axios.post(`${API}/api/backup/restore`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       toast.success(r.data.message, { duration: 6000 });
@@ -197,11 +198,11 @@ function Settings() {
   async function exportAllData() {
     try {
       const [emps, att, adv, ot, pmts] = await Promise.all([
-        axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/employees"),
-        axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/attendance"),
-        axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/advances"),
-        axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/overtime"),
-        axios.get("https://employee-payroll-system-production-9563.up.railway.app/api/payments"),
+        axios.get(`${API}/api/employees`),
+        axios.get(`${API}/api/attendance`),
+        axios.get(`${API}/api/advances`),
+        axios.get(`${API}/api/overtime`),
+        axios.get(`${API}/api/payments`),
       ]);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(emps.data.map((e) => ({ ID: e.id, Name: e.name, Department: e.department, "Daily Wage": e.wage, Phone: e.phone || "", Notes: e.notes || "", Status: e.status }))), "Employees");
