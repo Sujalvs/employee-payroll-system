@@ -1,9 +1,11 @@
 require("dotenv").config();
 const express = require("express");
-const { Pool } = require("pg");
+const Database = require("better-sqlite3");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const cron = require("node-cron");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -18,103 +20,85 @@ app.use((req, res, next) => {
   next();
 });
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-});
+const DB_DIR = path.join(__dirname, "database");
+const BACKUP_DIR = path.join(DB_DIR, "backups");
+const TEMP_DIR = path.join(DB_DIR, "temp");
+if (!fs.existsSync(DB_DIR)) fs.mkdirSync(DB_DIR, { recursive: true });
+if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
 
-async function initDB() {
-  const client = await pool.connect();
-  try {
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS employees (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        department TEXT NOT NULL,
-        wage REAL NOT NULL,
-        status TEXT DEFAULT 'Active',
-        phone TEXT,
-        notes TEXT
-      );
-      CREATE TABLE IF NOT EXISTS attendance (
-        id SERIAL PRIMARY KEY,
-        "employeeId" INTEGER NOT NULL,
-        date TEXT NOT NULL,
-        status TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS advances (
-        id SERIAL PRIMARY KEY,
-        "employeeId" INTEGER NOT NULL,
-        amount REAL NOT NULL,
-        reason TEXT,
-        date TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS overtime (
-        id SERIAL PRIMARY KEY,
-        "employeeId" INTEGER NOT NULL,
-        hours REAL NOT NULL,
-        rate REAL NOT NULL,
-        date TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS payments (
-        id SERIAL PRIMARY KEY,
-        "employeeId" INTEGER NOT NULL,
-        amount REAL NOT NULL,
-        note TEXT,
-        date TEXT NOT NULL,
-        category TEXT
-      );
-      CREATE TABLE IF NOT EXISTS admins (
-        id SERIAL PRIMARY KEY,
-        username TEXT UNIQUE,
-        password TEXT
-      );
-      CREATE TABLE IF NOT EXISTS trash (
-        id SERIAL PRIMARY KEY,
-        type TEXT NOT NULL,
-        label TEXT NOT NULL,
-        data TEXT NOT NULL,
-        "deletedAt" TEXT NOT NULL
-      );
-    `);
+const db = new Database(path.join(DB_DIR, "payroll.db"));
+db.pragma("journal_mode = WAL");
+db.pragma("foreign_keys = ON");
 
-    // Default admin
-    const existing = await client.query("SELECT id FROM admins WHERE id=1");
-    if (existing.rows.length === 0) {
-      const hashed = bcrypt.hashSync("admin123", 10);
-      await client.query("INSERT INTO admins (username, password) VALUES ($1, $2) ON CONFLICT DO NOTHING", ["admin", hashed]);
-    }
+db.exec(`
+  CREATE TABLE IF NOT EXISTS employees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL, department TEXT NOT NULL,
+    wage REAL NOT NULL, status TEXT DEFAULT 'Active',
+    phone TEXT, notes TEXT
+  );
+  CREATE TABLE IF NOT EXISTS attendance (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employeeId INTEGER NOT NULL, date TEXT NOT NULL, status TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS advances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employeeId INTEGER NOT NULL, amount REAL NOT NULL, reason TEXT, date TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS overtime (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employeeId INTEGER NOT NULL, hours REAL NOT NULL, rate REAL NOT NULL, date TEXT NOT NULL
+  );
+  CREATE TABLE IF NOT EXISTS payments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employeeId INTEGER NOT NULL, amount REAL NOT NULL,
+    note TEXT, date TEXT NOT NULL, category TEXT
+  );
+  CREATE TABLE IF NOT EXISTS admins (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE, password TEXT
+  );
+  CREATE TABLE IF NOT EXISTS trash (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL, label TEXT NOT NULL,
+    data TEXT NOT NULL, deletedAt TEXT NOT NULL
+  );
+`);
 
-    console.log("PostgreSQL connected — Tables ready");
-  } finally {
-    client.release();
-  }
+try { db.exec("ALTER TABLE employees ADD COLUMN phone TEXT"); } catch(e) {}
+try { db.exec("ALTER TABLE employees ADD COLUMN notes TEXT"); } catch(e) {}
+try { db.exec("ALTER TABLE payments ADD COLUMN category TEXT"); } catch(e) {}
+
+const existing = db.prepare("SELECT id FROM admins WHERE id=1").get();
+if (!existing) {
+  const hashed = bcrypt.hashSync("admin123", 10);
+  db.prepare("INSERT OR IGNORE INTO admins (id, username, password) VALUES (1, 'admin', ?)").run(hashed);
 }
 
-initDB().catch(console.error);
+console.log("SQLite connected (better-sqlite3)");
+console.log("Tables ready");
 
-// ── Cron ──────────────────────────────────────────────────
 let cronJob = null;
 function scheduleCron(enabled) {
   if (cronJob) { cronJob.stop(); cronJob = null; }
   if (!enabled) return;
   cronJob = cron.schedule("0 2 * * *", () => {
-    console.log(`[${new Date().toISOString()}] Auto backup — PostgreSQL data is always persisted`);
+    console.log(`[${new Date().toISOString()}] Auto backup completed`);
   });
 }
 
-// Routes
-const employeeRoutes = require("./routes/employees")(pool);
-const attendanceRoutes = require("./routes/attendance")(pool);
-const payrollRoutes = require("./routes/payroll")(pool);
-const dashboardRoutes = require("./routes/dashboard")(pool);
-const advancesRoutes = require("./routes/advances")(pool);
-const overtimeRoutes = require("./routes/overtime")(pool);
-const paymentsRoutes = require("./routes/payments")(pool);
-const authRoutes = require("./routes/auth")(pool);
-const reportsRoutes = require("./routes/reports")(pool);
-const backupRouter = require("./routes/backup")(pool, scheduleCron);
-const trashRouter = require("./routes/trash")(pool);
+const employeeRoutes = require("./routes/employees")(db);
+const attendanceRoutes = require("./routes/attendance")(db);
+const payrollRoutes = require("./routes/payroll")(db);
+const dashboardRoutes = require("./routes/dashboard")(db);
+const advancesRoutes = require("./routes/advances")(db);
+const overtimeRoutes = require("./routes/overtime")(db);
+const paymentsRoutes = require("./routes/payments")(db);
+const authRoutes = require("./routes/auth")(db);
+const reportsRoutes = require("./routes/reports")(db);
+const backupRouter = require("./routes/backup")(db, scheduleCron);
+const trashRouter = require("./routes/trash")(db);
 
 app.use("/api/employees", employeeRoutes);
 app.use("/api/attendance", attendanceRoutes);
