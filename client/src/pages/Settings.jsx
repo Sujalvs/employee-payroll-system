@@ -211,7 +211,7 @@ function Settings() {
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ot.data.map((o) => ({ Employee: o.employeeName, Hours: o.hours, Rate: o.rate, Amount: o.hours * o.rate, Date: o.date }))), "Overtime");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pmts.data.map((p) => ({ Employee: p.employeeName, Amount: p.amount, Note: p.note || "", Date: p.date }))), "Payments");
       const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-      saveAs(new Blob([buf], { type: "application/octet-stream" }), `Kshethropasana_Backup_${new Date().toISOString().split("T")[0]}.xlsx");
+      saveAs(new Blob([buf], { type: "application/octet-stream" }), `Kshethropasana_Backup_${new Date().toISOString().split("T")[0]}.xlsx`);
       toast.success("Excel export downloaded");
     } catch (e) { toast.error("Export failed"); }
   }

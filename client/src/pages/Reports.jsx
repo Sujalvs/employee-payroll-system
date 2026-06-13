@@ -127,7 +127,7 @@ function Reports() {
     }
 
     const tableRows = rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("");
-    const tableHeaders = headers.map(h => `<th>${h}</th>").join("");
+    const tableHeaders = headers.map(h => `<th>${h}</th>`).join("");
 
     const win = window.open("", "_blank");
     win.document.write(`
