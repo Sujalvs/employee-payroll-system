@@ -111,13 +111,13 @@ function Reports() {
     let headers = [], rows = [];
     if (activeTab === "Payroll") {
       headers = ["Employee","Department","Wage","Days","Gross","Overtime","Advances","Net Salary","Total Paid","Remaining","Excess"];
-      rows = d.map(r => [r.name, r.department, `₹${r.wage}`, r.presentDays, `₹${r.grossSalary}`, `₹${r.totalOvertime}`, `₹${r.totalAdvance}`, `₹${r.netSalary}`, `₹${r.totalPaid}`, r.remaining > 0 ? `₹${r.remaining}" : "—", r.excess > 0 ? "₹${r.excess}" : "—"]);
+      rows = d.map(r => [r.name, r.department, `₹${r.wage}`, r.presentDays, `₹${r.grossSalary}`, `₹${r.totalOvertime}`, `₹${r.totalAdvance}`, `₹${r.netSalary}`, `₹${r.totalPaid}`, r.remaining > 0 ? `₹${r.remaining}` : "—", r.excess > 0 ? `₹${r.excess}` : "—"]);
     } else if (activeTab === "Attendance") {
       headers = ["Employee","Department","Date","Status"];
       rows = d.map(r => [r.employeeName, r.department, r.date, r.status]);
     } else if (activeTab === "Advances") {
       headers = ["Employee","Department","Amount","Reason","Date"];
-      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}", r.reason || "—", r.date]);
+      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}`, r.reason || "—", r.date]);
     } else if (activeTab === "Overtime") {
       headers = ["Employee","Department","Hours","Rate/Hr","Amount","Date"];
       rows = d.map(r => [r.employeeName, r.department, r.hours, `₹${r.rate}`, `₹${r.amount}`, r.date]);

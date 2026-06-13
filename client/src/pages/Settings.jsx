@@ -155,7 +155,7 @@ function Settings() {
   }
 
   async function deleteBackup(filename) {
-    if (!await confirmDialog("Delete backup "${filename}`?`, `Yes, delete`)) return;
+    if (!await confirmDialog(`Delete backup "${filename}"?`, "Yes, delete")) return;
     try {
       await axios.delete(`${API}/api/backup/${filename}`);
       toast.success(`Backup deleted`);
