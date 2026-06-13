@@ -123,10 +123,10 @@ function Reports() {
       rows = d.map(r => [r.employeeName, r.department, r.hours, `₹${r.rate}`, `₹${r.amount}`, r.date]);
     } else if (activeTab === "Payments") {
       headers = ["Employee","Department","Amount","Note","Date"];
-      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}", r.note || "—", r.date]);
+      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}`, r.note || "—", r.date]);
     }
 
-    const tableRows = rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>").join("")}</tr>").join("");
+    const tableRows = rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("");
     const tableHeaders = headers.map(h => `<th>${h}</th>").join("");
 
     const win = window.open("", "_blank");

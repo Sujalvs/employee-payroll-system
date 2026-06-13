@@ -174,7 +174,7 @@ function Settings() {
     }
 
     const confirmed = await confirmDialog(
-      "Restore from "${file.name}"? This will REPLACE all current data with the backup. A safety backup will be created first.",
+      `Restore from "${file.name}"? This will REPLACE all current data with the backup. A safety backup will be created first.`,
       "Yes, restore"
     );
     if (!confirmed) return;
