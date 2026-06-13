@@ -11,7 +11,7 @@ function Login() {
 
   async function handleLogin() {
     if (!username || !password) {
-      toast.error("Please fill all fields");
+      toast.error(`Please fill all fields`);
       return;
     }
 
@@ -21,7 +21,7 @@ function Login() {
         { username, password }
       );
 
-      localStorage.setItem("token", response.data.token);
+      localStorage.setItem(`token", response.data.token);
       toast.success("Welcome back");
       navigate("/");
     } catch (error) {

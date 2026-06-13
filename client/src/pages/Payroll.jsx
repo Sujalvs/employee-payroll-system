@@ -204,7 +204,7 @@ function printPayslip(emp, month, year) {
       </div>
 
       <!-- Footer -->
-      <div class="footer">
+      <div class="footer`>
         <span>Kshethropasana Payroll Management System</span>
         <span>Generated on ${generatedOn}</span>
       </div>
@@ -219,7 +219,7 @@ function Payroll() {
   const [payroll, setPayroll] = useState([]);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [filterEmployee, setFilterEmployee] = useState("`);
+  const [filterEmployee, setFilterEmployee] = useState(``);
 
   useEffect(() => { fetchPayroll(); }, [month, year]);
 
@@ -238,7 +238,7 @@ function Payroll() {
 
   return (
     <>
-      <div style={{ marginBottom: `32px" }}>
+      <div style={{ marginBottom: `32px` }}>
         <h1>Payroll</h1>
         <p className="dashboard-subtitle">Monthly salary calculation and payment tracking</p>
       </div>

@@ -25,7 +25,7 @@ function Employees() {
   const [wage, setWage] = useState("");
   const [phone, setPhone] = useState("");
   const [notes, setNotes] = useState("");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(``);
   const [showInactive, setShowInactive] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
@@ -38,15 +38,15 @@ function Employees() {
     } catch (e) { console.log(e); }
   }
 
-  function clearForm() { setName(""); setDepartment(""); setWage(""); setPhone(""); setNotes(""); setEditingId(null); }
+  function clearForm() { setName(`"); setDepartment(""); setWage(""); setPhone(""); setNotes("`); setEditingId(null); }
 
   async function addOrUpdateEmployee() {
-    if (!name || !department || !wage) { toast.error("Please fill name, department and wage`); return; }
+    if (!name || !department || !wage) { toast.error(`Please fill name, department and wage`); return; }
     try {
       if (editingId) {
         await axios.put(`${API}/api/employees/${editingId}`, { name, department, wage, phone, notes });
       } else {
-        await axios.post(`${API}/api/employees", { name, department, wage, phone, notes });
+        await axios.post(`${API}/api/employees`, { name, department, wage, phone, notes });
       }
       await fetchEmployees(); clearForm();
       toast.success(editingId ? "Employee updated" : "Employee added");
@@ -61,19 +61,19 @@ function Employees() {
   }
 
   async function markInactive(id) {
-    if (!await confirmDialog("This employee will be marked as inactive.", "Mark Inactive`)) return;
+    if (!await confirmDialog("This employee will be marked as inactive.`, `Mark Inactive`)) return;
     try { await axios.put(`${API}/api/employees/inactive/${id}`); fetchEmployees(); toast.success(`Employee marked inactive`); }
     catch (e) { console.log(e); }
   }
 
   async function reactivate(id) {
-    try { await axios.put(`${API}/api/employees/active/${id}`); fetchEmployees(); toast.success(`Employee reactivated"); }
+    try { await axios.put(`${API}/api/employees/active/${id}`); fetchEmployees(); toast.success(`Employee reactivated`); }
     catch (e) { console.log(e); }
   }
 
   async function deleteEmployee(id) {
-    if (!await confirmDialog("This employee will be permanently deleted.", "Delete`)) return;
-    try { await axios.delete(`${API}/api/employees/${id}`); fetchEmployees(); toast.success(`Employee deleted"); if (editingId === id) clearForm(); }
+    if (!await confirmDialog("This employee will be permanently deleted.`, `Delete`)) return;
+    try { await axios.delete(`${API}/api/employees/${id}`); fetchEmployees(); toast.success(`Employee deleted`); if (editingId === id) clearForm(); }
     catch (e) { console.log(e); }
   }
 

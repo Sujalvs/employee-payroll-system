@@ -36,7 +36,7 @@ function Reports() {
   }, []);
 
   useEffect(() => {
-    setFilterEmployee(""); // reset employee filter when tab changes
+    setFilterEmployee(``); // reset employee filter when tab changes
     fetchReport();
   }, [activeTab, month, year]);
 
@@ -60,7 +60,7 @@ function Reports() {
   // Payroll tab uses r.id and r.name; all other tabs use r.employeeId and r.employeeName
   const filteredData = filterEmployee
     ? data.filter((r) =>
-        activeTab === "Payroll"
+        activeTab === `Payroll"
           ? String(r.id) === filterEmployee
           : String(r.employeeId || "") === filterEmployee
       )

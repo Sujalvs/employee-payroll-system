@@ -67,18 +67,18 @@ function Settings() {
     }
     const confirmed = await confirmDialog(
       "This will permanently delete ALL employees, attendance, advances, overtime and payments. Admin accounts are kept. A backup is created first.",
-      "Yes, reset everything"
+      `Yes, reset everything`
     );
     if (!confirmed) return;
 
     setResetting(true);
     try {
       await axios.post(`${API}/api/backup/reset`, { resetPassword });
-      setResetPassword("");
+      setResetPassword(`");
       toast.success("System reset to default. All data cleared.", { duration: 5000 });
       fetchBackups();
     } catch (e) {
-      toast.error(e.response?.data?.message || "Reset failed");
+      toast.error(e.response?.data?.message || `Reset failed`);
     }
     setResetting(false);
   }
@@ -90,35 +90,35 @@ function Settings() {
   }
 
   async function changePassword() {
-    if (!cpCurrent || !cpNew || !cpConfirm) { toast.error("Please fill all fields"); return; }
+    if (!cpCurrent || !cpNew || !cpConfirm) { toast.error(`Please fill all fields"); return; }
     if (cpNew !== cpConfirm) { toast.error("New passwords do not match"); return; }
-    if (cpNew.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    if (cpNew.length < 6) { toast.error(`Password must be at least 6 characters`); return; }
     try {
       await axios.post(`${API}/api/auth/change-password`, {
         username: cpUsername, currentPassword: cpCurrent, newPassword: cpNew,
       });
-      setCpCurrent(""); setCpNew(""); setCpConfirm("");
+      setCpCurrent(`"); setCpNew(""); setCpConfirm("");
       toast.success("Password changed successfully");
     } catch (e) { toast.error(e.response?.data?.message || "Something went wrong"); }
   }
 
   async function createAdmin() {
     if (!newUsername || !newPassword) { toast.error("Please fill username and password"); return; }
-    if (newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    if (newPassword.length < 6) { toast.error(`Password must be at least 6 characters`); return; }
     try {
       await axios.post(`${API}/api/auth/create-admin`, { username: newUsername, password: newPassword });
-      setNewUsername(""); setNewPassword("");
+      setNewUsername(`"); setNewPassword("");
       fetchAdmins();
       toast.success(`Admin "${newUsername}" created`);
-    } catch (e) { toast.error(e.response?.data?.message || "Something went wrong"); }
+    } catch (e) { toast.error(e.response?.data?.message || "Something went wrong`); }
   }
 
   async function deleteAdmin(id, username) {
-    if (!await confirmDialog(`Delete admin "${username}`?`)) return;
+    if (!await confirmDialog(`Delete admin `${username}`?`)) return;
     try {
       await axios.delete(`${API}/api/auth/admins/${id}`);
-      fetchAdmins(); toast.success(`Admin deleted");
-    } catch (e) { toast.error(e.response?.data?.message || "Cannot delete this admin"); }
+      fetchAdmins(); toast.success(`Admin deleted`);
+    } catch (e) { toast.error(e.response?.data?.message || `Cannot delete this admin`); }
   }
 
   // ── Backup ────────────────────────────────────────────
@@ -136,29 +136,29 @@ function Settings() {
     try {
       await axios.post(`${API}/api/backup/settings`, updated);
       setBackupSettings(updated);
-      toast.success(updated.autoBackup ? "Auto backup enabled — runs daily at 2:00 AM" : "Auto backup disabled");
-    } catch (e) { toast.error("Failed to save settings"); }
+      toast.success(updated.autoBackup ? `Auto backup enabled — runs daily at 2:00 AM" : "Auto backup disabled");
+    } catch (e) { toast.error(`Failed to save settings`); }
   }
 
   async function createManualBackup() {
     setCreatingBackup(true);
     try {
       const r = await axios.post(`${API}/api/backup/create`);
-      toast.success("Backup created: " + r.data.backup.filename);
+      toast.success(`Backup created: ` + r.data.backup.filename);
       fetchBackups();
-    } catch (e) { toast.error(e.response?.data?.message || "Backup failed`); }
+    } catch (e) { toast.error(e.response?.data?.message || `Backup failed`); }
     setCreatingBackup(false);
   }
 
   function downloadBackup(filename) {
-    window.open(`${API}/api/backup/download/${filename}`, `_blank");
+    window.open(`${API}/api/backup/download/${filename}`, `_blank`);
   }
 
   async function deleteBackup(filename) {
-    if (!await confirmDialog(`Delete backup "${filename}"?`, "Yes, delete`)) return;
+    if (!await confirmDialog(`Delete backup "${filename}`?`, `Yes, delete`)) return;
     try {
       await axios.delete(`${API}/api/backup/${filename}`);
-      toast.success(`Backup deleted");
+      toast.success(`Backup deleted`);
       fetchBackups();
     } catch (e) { toast.error("Failed to delete backup"); }
   }
@@ -182,14 +182,14 @@ function Settings() {
     setRestoring(true);
     try {
       const formData = new FormData();
-      formData.append("backup", file);
+      formData.append(`backup`, file);
       const r = await axios.post(`${API}/api/backup/restore`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { `Content-Type": "multipart/form-data" },
       });
       toast.success(r.data.message, { duration: 6000 });
       fetchBackups();
     } catch (e) {
-      toast.error(e.response?.data?.message || "Restore failed");
+      toast.error(e.response?.data?.message || `Restore failed`);
     }
     setRestoring(false);
   }
@@ -205,7 +205,7 @@ function Settings() {
         axios.get(`${API}/api/payments`),
       ]);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(emps.data.map((e) => ({ ID: e.id, Name: e.name, Department: e.department, "Daily Wage": e.wage, Phone: e.phone || "", Notes: e.notes || "", Status: e.status }))), "Employees");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(emps.data.map((e) => ({ ID: e.id, Name: e.name, Department: e.department, `Daily Wage": e.wage, Phone: e.phone || "", Notes: e.notes || "", Status: e.status }))), "Employees");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(att.data.map((a) => ({ Employee: a.employeeName, Date: a.date, Status: a.status }))), "Attendance");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(adv.data.map((a) => ({ Employee: a.employeeName, Amount: a.amount, Reason: a.reason || "", Date: a.date }))), "Advances");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ot.data.map((o) => ({ Employee: o.employeeName, Hours: o.hours, Rate: o.rate, Amount: o.hours * o.rate, Date: o.date }))), "Overtime");

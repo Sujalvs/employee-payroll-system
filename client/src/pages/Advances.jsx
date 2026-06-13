@@ -25,13 +25,13 @@ function Advances() {
   const [employeeId, setEmployeeId] = useState("");
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(``);
 
   useEffect(() => { fetchEmployees(); fetchAdvances(); }, []);
 
   async function fetchEmployees() {
     const r = await axios.get(`${API}/api/employees`);
-    setEmployees(r.data.filter((e) => e.status === "Active"));
+    setEmployees(r.data.filter((e) => e.status === `Active`));
   }
 
   async function fetchAdvances() {
@@ -41,18 +41,18 @@ function Advances() {
 
   async function saveAdvance() {
     try {
-      if (!employeeId || !amount || !date) { toast.error("Please fill all required fields"); return; }
+      if (!employeeId || !amount || !date) { toast.error(`Please fill all required fields`); return; }
       await axios.post(`${API}/api/advances`, { employeeId, amount, reason, date });
-      setEmployeeId(""); setAmount(""); setReason(""); setDate("");
+      setEmployeeId(`"); setAmount(""); setReason(""); setDate("");
       fetchAdvances(); toast.success("Advance saved");
-    } catch (e) { toast.error("Something went wrong"); }
+    } catch (e) { toast.error("Something went wrong`); }
   }
 
   async function deleteAdvance(id) {
-    if (!await confirmDialog("This advance record will be deleted.`)) return;
+    if (!await confirmDialog(`This advance record will be deleted.`)) return;
     try {
       await axios.delete(`${API}/api/advances/${id}`);
-      fetchAdvances(); toast.success(`Advance deleted");
+      fetchAdvances(); toast.success(`Advance deleted`);
     } catch (e) { toast.error("Something went wrong"); }
   }
 

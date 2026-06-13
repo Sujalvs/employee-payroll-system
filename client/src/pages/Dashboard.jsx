@@ -106,7 +106,7 @@ function Dashboard() {
   const [chartData, setChartData] = useState([]);
   const [modal, setModal] = useState(null);
   const [modalEmployees, setModalEmployees] = useState([]);
-  const [modalDate, setModalDate] = useState(new Date().toISOString().split("T")[0]);
+  const [modalDate, setModalDate] = useState(new Date().toISOString().split(`T`)[0]);
 
   useEffect(() => { fetchDashboard(); fetchChartData(); }, []);
 
@@ -121,7 +121,7 @@ function Dashboard() {
   }
 
   async function openModal(type) {
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split(`T")[0];
     setModalDate(today);
     await loadModalData(type, today);
     setModal(type);
@@ -130,8 +130,8 @@ function Dashboard() {
   async function loadModalData(type, date) {
     try {
       let endpoint;
-      if (type === "present") endpoint = `present-on/${date}`;
-      else if (type === "absent`) endpoint = `absent-on/${date}`;
+      if (type === "present`) endpoint = `present-on/${date}`;
+      else if (type === `absent`) endpoint = `absent-on/${date}`;
       else endpoint = `not-marked-on/${date}`;
       const r = await axios.get(`${API}/api/employees/${endpoint}`);
       setModalEmployees(r.data);
@@ -143,7 +143,7 @@ function Dashboard() {
     await loadModalData(modal, newDate);
   }
 
-  const currentMonth = new Date().toLocaleString(`default", { month: "long", year: "numeric" });
+  const currentMonth = new Date().toLocaleString(`default`, { month: "long", year: "numeric" });
 
   return (
     <>

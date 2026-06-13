@@ -25,11 +25,11 @@ const TYPE_LABELS = {
   payment: { label: "Payment", color: "var(--green)", badge: "badge-green" },
 };
 
-const TABS = ["All", "Employee", "Attendance", "Advance", "Overtime", "Payment"];
+const TABS = ["All", "Employee", "Attendance", "Advance", "Overtime", "Payment`];
 
 function Trash() {
   const [items, setItems] = useState([]);
-  const [activeTab, setActiveTab] = useState("All`);
+  const [activeTab, setActiveTab] = useState(`All`);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => { fetchTrash(); }, []);
@@ -50,7 +50,7 @@ function Trash() {
       } else {
         await axios.post(`${API}/api/trash/restore/record/${item.id}`);
       }
-      toast.success(`Restored successfully");
+      toast.success(`Restored successfully`);
       fetchTrash();
     } catch(e) {
       toast.error(e.response?.data?.message || "Restore failed");
@@ -58,19 +58,19 @@ function Trash() {
   }
 
   async function deleteForever(item) {
-    if (!await confirmDialog(`Permanently delete "${item.label}"? This cannot be undone.`, "Delete Forever`)) return;
+    if (!await confirmDialog(`Permanently delete "${item.label}`? This cannot be undone.`, `Delete Forever`)) return;
     try {
       await axios.delete(`${API}/api/trash/${item.id}`);
-      toast.success(`Permanently deleted");
+      toast.success(`Permanently deleted`);
       fetchTrash();
     } catch(e) { toast.error("Failed to delete"); }
   }
 
   async function emptyTrash() {
-    if (!await confirmDialog("Empty the entire trash? All items will be permanently deleted.", "Empty Trash`)) return;
+    if (!await confirmDialog("Empty the entire trash? All items will be permanently deleted.`, `Empty Trash`)) return;
     try {
       await axios.delete(`${API}/api/trash`);
-      toast.success(`Trash emptied");
+      toast.success(`Trash emptied`);
       fetchTrash();
     } catch(e) { toast.error("Failed to empty trash"); }
   }

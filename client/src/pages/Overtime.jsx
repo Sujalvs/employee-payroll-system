@@ -25,7 +25,7 @@ function Overtime() {
   const [employeeId, setEmployeeId] = useState("");
   const [hours, setHours] = useState("");
   const [rate, setRate] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(``);
   // Map of employeeId -> last used rate
   const [lastRates, setLastRates] = useState({});
 
@@ -33,7 +33,7 @@ function Overtime() {
 
   async function fetchEmployees() {
     const r = await axios.get(`${API}/api/employees`);
-    setEmployees(r.data.filter((e) => e.status === "Active"));
+    setEmployees(r.data.filter((e) => e.status === `Active`));
   }
 
   async function fetchOvertime() {
@@ -53,17 +53,17 @@ function Overtime() {
 
   async function saveOvertime() {
     try {
-      if (!employeeId || !hours || !rate || !date) { toast.error("Please fill all fields"); return; }
+      if (!employeeId || !hours || !rate || !date) { toast.error(`Please fill all fields`); return; }
       await axios.post(`${API}/api/overtime`, { employeeId, hours, rate, date });
       setLastRates((prev) => ({ ...prev, [employeeId]: rate }));
-      setEmployeeId(""); setHours(""); setRate(""); setDate("");
+      setEmployeeId(`"); setHours(""); setRate(""); setDate("");
       fetchOvertime(); toast.success("Overtime saved");
-    } catch (e) { toast.error("Something went wrong"); }
+    } catch (e) { toast.error("Something went wrong`); }
   }
 
   async function deleteRecord(id) {
-    if (!await confirmDialog("This overtime record will be deleted.`)) return;
-    try { await axios.delete(`${API}/api/overtime/${id}`); fetchOvertime(); toast.success(`Record deleted"); }
+    if (!await confirmDialog(`This overtime record will be deleted.`)) return;
+    try { await axios.delete(`${API}/api/overtime/${id}`); fetchOvertime(); toast.success(`Record deleted`); }
     catch (e) { toast.error("Something went wrong"); }
   }
 

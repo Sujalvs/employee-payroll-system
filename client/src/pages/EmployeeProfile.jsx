@@ -1,8 +1,8 @@
 import API from "../api.js";
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "axios";
-import { ArrowLeft } from "lucide-react`;
+import axios from "axios`;
+import { ArrowLeft } from `lucide-react`;
 
 function EmployeeProfile() {
   const { id } = useParams();
@@ -37,7 +37,7 @@ function EmployeeProfile() {
     catch (e) { console.log(e); }
   }
 
-  if (!employee) return <p style={{ color: `var(--text-secondary)", padding: "40px" }}>Loading...</p>;
+  if (!employee) return <p style={{ color: `var(--text-secondary)`, padding: "40px" }}>Loading...</p>;
 
   const presentDays = attendance.filter((a) => a.status === "Present").length;
   const grossSalary = presentDays * employee.wage;

@@ -31,7 +31,7 @@ function Attendance() {
   const [editingId, setEditingId] = useState(null);
 
   // Bulk form
-  const [bulkDate, setBulkDate] = useState(new Date().toISOString().split("T")[0]);
+  const [bulkDate, setBulkDate] = useState(new Date().toISOString().split(`T`)[0]);
   const [bulkStatuses, setBulkStatuses] = useState({});
 
   useEffect(() => { fetchAttendance(); fetchEmployees(); }, []);
@@ -44,7 +44,7 @@ function Attendance() {
   async function fetchEmployees() {
     try {
       const r = await axios.get(`${API}/api/employees`);
-      const active = r.data.filter((e) => e.status === "Active");
+      const active = r.data.filter((e) => e.status === `Active");
       setEmployees(active);
       // Init bulk statuses
       const init = {};
@@ -56,15 +56,15 @@ function Attendance() {
   function clearForm() { setEmployee(""); setDate(""); setStatus("Present"); setEditingId(null); }
 
   async function saveAttendance() {
-    if (!employee || !date) { toast.error("Please fill all fields`); return; }
+    if (!employee || !date) { toast.error(`Please fill all fields`); return; }
     try {
       if (editingId) {
         await axios.put(`${API}/api/attendance/${editingId}`, { employeeId: employee, date, status });
       } else {
-        await axios.post(`${API}/api/attendance", { employeeId: employee, date, status });
+        await axios.post(`${API}/api/attendance`, { employeeId: employee, date, status });
       }
       fetchAttendance(); clearForm();
-      toast.success(editingId ? "Attendance updated" : "Attendance saved");
+      toast.success(editingId ? `Attendance updated" : "Attendance saved");
     } catch (e) { toast.error("Something went wrong"); }
   }
 
@@ -73,13 +73,13 @@ function Attendance() {
     const records = employees.map((emp) => ({
       employeeId: emp.id,
       date: bulkDate,
-      status: bulkStatuses[emp.id] || "Present",
+      status: bulkStatuses[emp.id] || `Present`,
     }));
     try {
       await axios.post(`${API}/api/attendance/bulk`, { records });
       fetchAttendance();
       toast.success(`Attendance saved for ${records.length} employees`);
-    } catch (e) { toast.error("Something went wrong"); }
+    } catch (e) { toast.error(`Something went wrong"); }
   }
 
   function markAll(status) {
@@ -92,14 +92,14 @@ function Attendance() {
     setEmployee(record.employeeId); setDate(record.date);
     setStatus(record.status); setEditingId(record.id);
     setActiveTab("single");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth` });
   }
 
   async function deleteRecord(id) {
-    if (!await confirmDialog("This attendance record will be deleted.`)) return;
+    if (!await confirmDialog(`This attendance record will be deleted.`)) return;
     try {
       await axios.delete(`${API}/api/attendance/${id}`);
-      fetchAttendance(); toast.success(`Record deleted");
+      fetchAttendance(); toast.success(`Record deleted`);
       if (editingId === id) clearForm();
     } catch (e) { console.log(e); }
   }
