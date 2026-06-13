@@ -31,7 +31,7 @@ function Attendance() {
   const [editingId, setEditingId] = useState(null);
 
   // Bulk form
-  const [bulkDate, setBulkDate] = useState(new Date().toISOString().split(`T")[0]);
+  const [bulkDate, setBulkDate] = useState(new Date().toISOString().split("T")[0]);
   const [bulkStatuses, setBulkStatuses] = useState({});
 
   useEffect(() => { fetchAttendance(); fetchEmployees(); }, []);
@@ -44,7 +44,7 @@ function Attendance() {
   async function fetchEmployees() {
     try {
       const r = await axios.get(`${API}/api/employees`);
-      const active = r.data.filter((e) => e.status === `Active");
+      const active = r.data.filter((e) => e.status === "Active");
       setEmployees(active);
       // Init bulk statuses
       const init = {};
@@ -64,7 +64,7 @@ function Attendance() {
         await axios.post(`${API}/api/attendance`, { employeeId: employee, date, status });
       }
       fetchAttendance(); clearForm();
-      toast.success(editingId ? `Attendance updated" : "Attendance saved");
+      toast.success(editingId ? "Attendance updated" : "Attendance saved");
     } catch (e) { toast.error("Something went wrong"); }
   }
 
@@ -79,7 +79,7 @@ function Attendance() {
       await axios.post(`${API}/api/attendance/bulk`, { records });
       fetchAttendance();
       toast.success(`Attendance saved for ${records.length} employees`);
-    } catch (e) { toast.error(`Something went wrong"); }
+    } catch (e) { toast.error("Something went wrong"); }
   }
 
   function markAll(status) {
@@ -92,7 +92,7 @@ function Attendance() {
     setEmployee(record.employeeId); setDate(record.date);
     setStatus(record.status); setEditingId(record.id);
     setActiveTab("single");
-    window.scrollTo({ top: 0, behavior: "smooth` });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function deleteRecord(id) {

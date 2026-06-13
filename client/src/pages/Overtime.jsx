@@ -89,7 +89,7 @@ function Overtime() {
             <option value="">Select employee</option>
             {employees.map((emp) => (
               <option key={emp.id} value={emp.id}>
-                {emp.name}{lastRates[emp.id] ? ` (₹${lastRates[emp.id]}/hr)` : ""}
+                {emp.name}{lastRates[emp.id] ? ` (₹${lastRates[emp.id]}/hr)" : ""}
               </option>
             ))}
           </select>

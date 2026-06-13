@@ -174,8 +174,8 @@ function printPayslip(emp, month, year) {
               <td>Gross Salary (${emp.presentDays} days × ₹${emp.wage})</td>
               <td>₹${emp.grossSalary?.toLocaleString()}</td>
             </tr>
-            ${emp.totalOvertime > 0 ? `<tr><td>Overtime</td><td style="color:#0a84ff">+ ₹${emp.totalOvertime?.toLocaleString()}</td></tr>` : ""}
-            ${emp.totalAdvance > 0 ? `<tr><td>Advance Deduction</td><td style="color:#ef4444">− ₹${emp.totalAdvance?.toLocaleString()}</td></tr>` : ""}
+            ${emp.totalOvertime > 0 ? "<tr><td>Overtime</td><td style="color:#0a84ff">+ ₹${emp.totalOvertime?.toLocaleString()}</td></tr>" : ""}
+            ${emp.totalAdvance > 0 ? "<tr><td>Advance Deduction</td><td style="color:#ef4444">− ₹${emp.totalAdvance?.toLocaleString()}</td></tr>" : ""}
             <tr class="total-row">
               <td>Net Salary</td>
               <td style="color:${emp.netSalary >= 0 ? "#16a34a" : "#dc2626"}">₹${emp.netSalary?.toLocaleString()}</td>
@@ -193,18 +193,18 @@ function printPayslip(emp, month, year) {
           <div class="summary-box remaining">
             <div class="summary-label">Remaining Balance</div>
             <div class="summary-amount">₹${emp.remaining?.toLocaleString()}</div>
-          </div>` : ""}
+          </div>" : ""}
           ${emp.excess > 0 ? `
           <div class="summary-box excess">
             <div class="summary-label">Excess Paid</div>
             <div class="summary-amount">₹${emp.excess?.toLocaleString()}</div>
-          </div>` : ""}
+          </div>" : ""}
         </div>
 
       </div>
 
       <!-- Footer -->
-      <div class="footer`>
+      <div class="footer">
         <span>Kshethropasana Payroll Management System</span>
         <span>Generated on ${generatedOn}</span>
       </div>
@@ -294,7 +294,7 @@ function Payroll() {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={12} className="empty-state">{payroll.length === 0 ? `No payroll data for ${MONTH_NAMES[month]} ${year}` : "No employee found"}</td></tr>
+              <tr><td colSpan={12} className="empty-state">{payroll.length === 0 ? `No payroll data for ${MONTH_NAMES[month]} ${year}" : "No employee found"}</td></tr>
             ) : filtered.map((emp) => (
               <tr key={emp.id}>
                 <td style={{ fontWeight: "600" }}>{emp.name}</td>

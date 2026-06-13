@@ -121,7 +121,7 @@ function Dashboard() {
   }
 
   async function openModal(type) {
-    const today = new Date().toISOString().split(`T")[0];
+    const today = new Date().toISOString().split("T")[0];
     setModalDate(today);
     await loadModalData(type, today);
     setModal(type);
@@ -130,7 +130,7 @@ function Dashboard() {
   async function loadModalData(type, date) {
     try {
       let endpoint;
-      if (type === "present") endpoint = `present-on/${date}`;
+      if (type === "present") endpoint = "present-on/${date}`;
       else if (type === `absent`) endpoint = `absent-on/${date}`;
       else endpoint = `not-marked-on/${date}`;
       const r = await axios.get(`${API}/api/employees/${endpoint}`);

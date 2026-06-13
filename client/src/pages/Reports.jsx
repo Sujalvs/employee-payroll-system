@@ -60,7 +60,7 @@ function Reports() {
   // Payroll tab uses r.id and r.name; all other tabs use r.employeeId and r.employeeName
   const filteredData = filterEmployee
     ? data.filter((r) =>
-        activeTab === `Payroll"
+        activeTab === "Payroll"
           ? String(r.id) === filterEmployee
           : String(r.employeeId || "") === filterEmployee
       )
@@ -82,14 +82,14 @@ function Reports() {
     XLSX.utils.book_append_sheet(wb, ws, activeTab);
     const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : "";
-    const suffix = empName ? `_${empName.replace(/ /g,"_")}` : "";
+    const suffix = empName ? `_${empName.replace(/ /g,"_")}" : "";
     saveAs(new Blob([buf], { type: "application/octet-stream" }), `${activeTab}_${MONTH_NAMES[month]}_${year}${suffix}.xlsx`);
   }
 
   function exportPDF() {
     const doc = new jsPDF({ orientation: "landscape" });
     const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : "";
-    const title = `${activeTab} Report — ${MONTH_NAMES[month]} ${year}${empName ? ` — ${empName}` : ""}";
+    const title = `${activeTab} Report — ${MONTH_NAMES[month]} ${year}${empName ? ` — ${empName}" : ""}";
     doc.setFontSize(13);
     doc.text(title, 14, 15);
     let head = [], body = [];
@@ -100,7 +100,7 @@ function Reports() {
     else if (activeTab === "Overtime") { head = [["Employee","Department","Hours","Rate/Hr","Amount","Date"]]; body = d.map((r) => [r.employeeName, r.department, r.hours, r.rate, r.amount, r.date]); }
     else if (activeTab === "Payments") { head = [["Employee","Department","Amount","Note","Date"]]; body = d.map((r) => [r.employeeName, r.department, r.amount, r.note || "", r.date]); }
     autoTable(doc, { startY: 24, head, body, styles: { fontSize: 9 }, headStyles: { fillColor: [10, 132, 255] } });
-    doc.save(`${activeTab}_${MONTH_NAMES[month]}_${year}${empName ? `_${empName.replace(/ /g,"_")}` : ""}.pdf");
+    doc.save(`${activeTab}_${MONTH_NAMES[month]}_${year}${empName ? `_${empName.replace(/ /g,"_")}" : ""}.pdf");
   }
 
   function printReport() {
@@ -111,23 +111,23 @@ function Reports() {
     let headers = [], rows = [];
     if (activeTab === "Payroll") {
       headers = ["Employee","Department","Wage","Days","Gross","Overtime","Advances","Net Salary","Total Paid","Remaining","Excess"];
-      rows = d.map(r => [r.name, r.department, `₹${r.wage}`, r.presentDays, `₹${r.grossSalary}`, `₹${r.totalOvertime}`, `₹${r.totalAdvance}`, `₹${r.netSalary}`, `₹${r.totalPaid}`, r.remaining > 0 ? `₹${r.remaining}` : "—", r.excess > 0 ? `₹${r.excess}` : "—"]);
+      rows = d.map(r => [r.name, r.department, `₹${r.wage}`, r.presentDays, `₹${r.grossSalary}`, `₹${r.totalOvertime}`, `₹${r.totalAdvance}`, `₹${r.netSalary}`, `₹${r.totalPaid}`, r.remaining > 0 ? `₹${r.remaining}" : "—", r.excess > 0 ? "₹${r.excess}" : "—"]);
     } else if (activeTab === "Attendance") {
       headers = ["Employee","Department","Date","Status"];
       rows = d.map(r => [r.employeeName, r.department, r.date, r.status]);
     } else if (activeTab === "Advances") {
       headers = ["Employee","Department","Amount","Reason","Date"];
-      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}`, r.reason || "—", r.date]);
+      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}", r.reason || "—", r.date]);
     } else if (activeTab === "Overtime") {
       headers = ["Employee","Department","Hours","Rate/Hr","Amount","Date"];
       rows = d.map(r => [r.employeeName, r.department, r.hours, `₹${r.rate}`, `₹${r.amount}`, r.date]);
     } else if (activeTab === "Payments") {
       headers = ["Employee","Department","Amount","Note","Date"];
-      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}`, r.note || "—", r.date]);
+      rows = d.map(r => [r.employeeName, r.department, `₹${r.amount}", r.note || "—", r.date]);
     }
 
-    const tableRows = rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join("")}</tr>").join("");
-    const tableHeaders = headers.map(h => `<th>${h}</th>`).join("");
+    const tableRows = rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>").join("")}</tr>").join("");
+    const tableHeaders = headers.map(h => `<th>${h}</th>").join("");
 
     const win = window.open("", "_blank");
     win.document.write(`

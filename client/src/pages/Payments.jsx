@@ -49,7 +49,7 @@ function Payments() {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState("");
-  const [category, setCategory] = useState(`Salary");
+  const [category, setCategory] = useState("Salary");
 
   useEffect(() => { fetchEmployees(); fetchPayments(); }, []);
 

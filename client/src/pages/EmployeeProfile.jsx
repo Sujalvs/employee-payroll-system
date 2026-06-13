@@ -37,7 +37,7 @@ function EmployeeProfile() {
     catch (e) { console.log(e); }
   }
 
-  if (!employee) return <p style={{ color: `var(--text-secondary)`, padding: "40px" }}>Loading...</p>;
+  if (!employee) return <p style={{ color: "var(--text-secondary)", padding: "40px" }}>Loading...</p>;
 
   const presentDays = attendance.filter((a) => a.status === "Present").length;
   const grossSalary = presentDays * employee.wage;
@@ -103,13 +103,13 @@ function EmployeeProfile() {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "20px" }}>
           {[
             { label: "Present Days", value: presentDays, unit: "days" },
-            { label: "Gross Salary", value: `₹${grossSalary.toLocaleString()}`, color: "var(--text-primary)" },
-            { label: "Overtime", value: `₹${totalOvertime.toLocaleString()}`, color: "var(--accent)" },
-            { label: "Advances", value: `₹${totalAdvances.toLocaleString()}`, color: "var(--amber)" },
-            { label: "Net Salary", value: `₹${netSalary.toLocaleString()}`, color: netSalary >= 0 ? "var(--green)" : "var(--red)" },
-            { label: "Total Paid", value: `₹${totalPaid.toLocaleString()}`, color: "var(--green)" },
-            ...(remaining > 0 ? [{ label: "Remaining", value: `₹${remaining.toLocaleString()}`, color: "var(--amber)" }] : []),
-            ...(excess > 0 ? [{ label: "Excess Paid", value: `₹${excess.toLocaleString()}`, color: "var(--purple)" }] : []),
+            { label: "Gross Salary", value: "₹${grossSalary.toLocaleString()}", color: "var(--text-primary)" },
+            { label: "Overtime", value: "₹${totalOvertime.toLocaleString()}", color: "var(--accent)" },
+            { label: "Advances", value: "₹${totalAdvances.toLocaleString()}", color: "var(--amber)" },
+            { label: "Net Salary", value: "₹${netSalary.toLocaleString()}", color: netSalary >= 0 ? "var(--green)" : "var(--red)" },
+            { label: "Total Paid", value: "₹${totalPaid.toLocaleString()}", color: "var(--green)" },
+            ...(remaining > 0 ? [{ label: "Remaining", value: "₹${remaining.toLocaleString()}", color: "var(--amber)" }] : []),
+            ...(excess > 0 ? [{ label: "Excess Paid", value: "₹${excess.toLocaleString()}", color: "var(--purple)" }] : []),
           ].map((item) => (
             <div key={item.label}>
               <p style={{ color: "var(--text-tertiary)", fontSize: "11px", fontWeight: "600", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "6px" }}>{item.label}</p>

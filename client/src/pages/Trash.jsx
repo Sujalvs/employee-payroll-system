@@ -25,7 +25,7 @@ const TYPE_LABELS = {
   payment: { label: "Payment", color: "var(--green)", badge: "badge-green" },
 };
 
-const TABS = ["All", "Employee", "Attendance", "Advance", "Overtime", "Payment`];
+const TABS = ["All", "Employee", "Attendance", "Advance", "Overtime", "Payment"];
 
 function Trash() {
   const [items, setItems] = useState([]);
@@ -58,7 +58,7 @@ function Trash() {
   }
 
   async function deleteForever(item) {
-    if (!await confirmDialog(`Permanently delete "${item.label}`? This cannot be undone.`, `Delete Forever`)) return;
+    if (!await confirmDialog("Permanently delete "${item.label}`? This cannot be undone.`, `Delete Forever`)) return;
     try {
       await axios.delete(`${API}/api/trash/${item.id}`);
       toast.success(`Permanently deleted`);
@@ -67,7 +67,7 @@ function Trash() {
   }
 
   async function emptyTrash() {
-    if (!await confirmDialog("Empty the entire trash? All items will be permanently deleted.`, `Empty Trash")) return;
+    if (!await confirmDialog("Empty the entire trash? All items will be permanently deleted.", "Empty Trash")) return;
     try {
       await axios.delete(`${API}/api/trash`);
       toast.success(`Trash emptied`);
@@ -87,7 +87,7 @@ function Trash() {
     const d = JSON.parse(item.data);
     if (item.type === "employee") return (
       <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-        Dept: {d.department} · Wage: ₹{d.wage}{d.phone ? ` · Phone: ${d.phone}` : ""}
+        Dept: {d.department} · Wage: ₹{d.wage}{d.phone ? ` · Phone: ${d.phone}" : ""}
       </div>
     );
     if (item.type === "attendance") return (
@@ -97,7 +97,7 @@ function Trash() {
     );
     if (item.type === "advance") return (
       <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-        Amount: <span style={{ color: "var(--amber)" }}>₹{d.amount}</span> · Date: {d.date}{d.reason ? ` · ${d.reason}` : ""}
+        Amount: <span style={{ color: "var(--amber)" }}>₹{d.amount}</span> · Date: {d.date}{d.reason ? ` · ${d.reason}" : ""}
       </div>
     );
     if (item.type === "overtime") return (
@@ -107,7 +107,7 @@ function Trash() {
     );
     if (item.type === "payment") return (
       <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-        Amount: <span style={{ color: "var(--green)" }}>₹{d.amount}</span> · Date: {d.date}{d.category ? ` · ${d.category}` : ""}
+        Amount: <span style={{ color: "var(--green)" }}>₹{d.amount}</span> · Date: {d.date}{d.category ? ` · ${d.category}" : ""}
       </div>
     );
     return null;

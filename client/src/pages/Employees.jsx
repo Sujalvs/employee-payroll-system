@@ -61,7 +61,7 @@ function Employees() {
   }
 
   async function markInactive(id) {
-    if (!await confirmDialog("This employee will be marked as inactive.`, `Mark Inactive")) return;
+    if (!await confirmDialog("This employee will be marked as inactive.", "Mark Inactive")) return;
     try { await axios.put(`${API}/api/employees/inactive/${id}`); fetchEmployees(); toast.success(`Employee marked inactive`); }
     catch (e) { console.log(e); }
   }
@@ -72,7 +72,7 @@ function Employees() {
   }
 
   async function deleteEmployee(id) {
-    if (!await confirmDialog("This employee will be permanently deleted.`, `Delete")) return;
+    if (!await confirmDialog("This employee will be permanently deleted.", "Delete")) return;
     try { await axios.delete(`${API}/api/employees/${id}`); fetchEmployees(); toast.success(`Employee deleted`); if (editingId === id) clearForm(); }
     catch (e) { console.log(e); }
   }
