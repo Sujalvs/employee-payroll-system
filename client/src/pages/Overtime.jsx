@@ -79,7 +79,6 @@ function Overtime() {
     <>
       <div style={{ marginBottom: "32px" }}>
         <h1>Overtime</h1>
-        <p className="dashboard-subtitle">Rate is auto-calculated from employee wage ÷ 8 hrs</p>
       </div>
 
       <div className="form-panel">
