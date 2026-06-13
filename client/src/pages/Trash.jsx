@@ -107,7 +107,7 @@ function Trash() {
     );
     if (item.type === "payment") return (
       <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "4px" }}>
-        Amount: <span style={{ color: "var(--green)" }}>₹{d.amount}</span> · Date: {d.date}{d.category ? ` · ${d.category}" : ""}
+        Amount: <span style={{ color: "var(--green)" }}>₹{d.amount}</span> · Date: {d.date}{d.category ? ` · ${d.category}` : ""}
       </div>
     );
     return null;

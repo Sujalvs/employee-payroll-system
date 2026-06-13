@@ -294,7 +294,7 @@ function Payroll() {
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={12} className="empty-state">{payroll.length === 0 ? `No payroll data for ${MONTH_NAMES[month]} ${year}" : "No employee found"}</td></tr>
+              <tr><td colSpan={12} className="empty-state">{payroll.length === 0 ? `No payroll data for ${MONTH_NAMES[month]} ${year}` : "No employee found"}</td></tr>
             ) : filtered.map((emp) => (
               <tr key={emp.id}>
                 <td style={{ fontWeight: "600" }}>{emp.name}</td>

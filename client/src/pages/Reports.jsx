@@ -89,7 +89,7 @@ function Reports() {
   function exportPDF() {
     const doc = new jsPDF({ orientation: "landscape" });
     const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : "";
-    const title = `${activeTab} Report — ${MONTH_NAMES[month]} ${year}${empName ? ` — ${empName}" : ""}";
+    const title = `${activeTab} Report — ${MONTH_NAMES[month]} ${year}${empName ? ` — ${empName}` : ""}`;
     doc.setFontSize(13);
     doc.text(title, 14, 15);
     let head = [], body = [];
@@ -100,7 +100,7 @@ function Reports() {
     else if (activeTab === "Overtime") { head = [["Employee","Department","Hours","Rate/Hr","Amount","Date"]]; body = d.map((r) => [r.employeeName, r.department, r.hours, r.rate, r.amount, r.date]); }
     else if (activeTab === "Payments") { head = [["Employee","Department","Amount","Note","Date"]]; body = d.map((r) => [r.employeeName, r.department, r.amount, r.note || "", r.date]); }
     autoTable(doc, { startY: 24, head, body, styles: { fontSize: 9 }, headStyles: { fillColor: [10, 132, 255] } });
-    doc.save(`${activeTab}_${MONTH_NAMES[month]}_${year}${empName ? `_${empName.replace(/ /g,"_")}" : ""}.pdf");
+    doc.save(`${activeTab}_${MONTH_NAMES[month]}_${year}${empName ? `_${empName.replace(/ /g,"_")}` : ""}.pdf`);
   }
 
   function printReport() {

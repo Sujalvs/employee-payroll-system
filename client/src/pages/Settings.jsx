@@ -114,7 +114,7 @@ function Settings() {
   }
 
   async function deleteAdmin(id, username) {
-    if (!await confirmDialog(`Delete admin `${username}`?`)) return;
+    if (!await confirmDialog(`Delete admin "${username}"?`)) return;
     try {
       await axios.delete(`${API}/api/auth/admins/${id}`);
       fetchAdmins(); toast.success(`Admin deleted`);
