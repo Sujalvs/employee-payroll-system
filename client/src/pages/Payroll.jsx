@@ -219,7 +219,10 @@ function Payroll() {
   const [payroll, setPayroll] = useState([]);
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
-  const [filterEmployee, setFilterEmployee] = useState(``);
+  const [filterEmployee, setFilterEmployee] = useState("");
+  const [filterDept, setFilterDept] = useState(""); // single dept
+  const [excludedDepts, setExcludedDepts] = useState(new Set()); // multi-exclude
+  const [showDeptPanel, setShowDeptPanel] = useState(false);
 
   useEffect(() => { fetchPayroll(); }, [month, year]);
 
@@ -230,11 +233,25 @@ function Payroll() {
     } catch (e) { console.log(e); }
   }
 
-  const filtered = filterEmployee ? payroll.filter((e) => String(e.id) === filterEmployee) : payroll;
+  const departments = [...new Set(payroll.map(e => e.department))].sort();
+  const filtered = payroll.filter(e => {
+    if (filterEmployee && String(e.id) !== filterEmployee) return false;
+    if (filterDept && e.department !== filterDept) return false;
+    if (excludedDepts.size > 0 && excludedDepts.has(e.department)) return false;
+    return true;
+  });
   const totalNet = filtered.reduce((s, e) => s + e.netSalary, 0);
   const totalPaid = filtered.reduce((s, e) => s + e.totalPaid, 0);
   const totalRemaining = filtered.reduce((s, e) => s + e.remaining, 0);
   const selectedEmployee = filterEmployee ? payroll.find((e) => String(e.id) === filterEmployee) : null;
+
+  function toggleExclude(dept) {
+    setExcludedDepts(prev => {
+      const next = new Set(prev);
+      if (next.has(dept)) next.delete(dept); else next.add(dept);
+      return next;
+    });
+  }
 
   return (
     <>
@@ -250,18 +267,67 @@ function Payroll() {
         <select value={year} onChange={(e) => setYear(e.target.value)} style={selectStyle}>
           {Array.from({ length: 20 }, (_, i) => { const y = new Date().getFullYear() - 5 + i; return <option key={y} value={y}>{y}</option>; })}
         </select>
-        <select value={filterEmployee} onChange={(e) => setFilterEmployee(e.target.value)} style={{ ...selectStyle, minWidth: "200px", borderColor: filterEmployee ? "var(--accent)" : "var(--border-default)", boxShadow: filterEmployee ? "0 0 0 3px var(--accent-glow)" : "none" }}>
-          <option value="">All Employees</option>
-          {payroll.map((emp) => <option key={emp.id} value={String(emp.id)}>{emp.name}</option>)}
+        {/* Department filter */}
+        <select value={filterDept} onChange={e => { setFilterDept(e.target.value); setFilterEmployee(""); setExcludedDepts(new Set()); }}
+          style={{ ...selectStyle, minWidth: "170px", borderColor: filterDept ? "var(--accent)" : "var(--border-default)", boxShadow: filterDept ? "0 0 0 3px var(--accent-glow)" : "none" }}>
+          <option value="">All Departments</option>
+          {departments.map(d => <option key={d} value={d}>{d}</option>)}
         </select>
-        {filterEmployee && <button onClick={() => setFilterEmployee("")} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>✕ Clear</button>}
+
+        {/* Employee filter */}
+        <select value={filterEmployee} onChange={e => { setFilterEmployee(e.target.value); setFilterDept(""); setExcludedDepts(new Set()); }}
+          style={{ ...selectStyle, minWidth: "190px", borderColor: filterEmployee ? "var(--accent)" : "var(--border-default)", boxShadow: filterEmployee ? "0 0 0 3px var(--accent-glow)" : "none" }}>
+          <option value="">All Employees</option>
+          {payroll.filter(e => !filterDept || e.department === filterDept).map(emp => <option key={emp.id} value={String(emp.id)}>{emp.name}</option>)}
+        </select>
+
+        {/* Exclude departments button */}
+        {!filterEmployee && !filterDept && (
+          <div style={{ position: "relative" }}>
+            <button onClick={() => setShowDeptPanel(p => !p)}
+              style={{ ...selectStyle, minWidth: "auto", padding: "10px 16px", cursor: "pointer",
+                borderColor: excludedDepts.size > 0 ? "var(--red)" : "var(--border-default)",
+                boxShadow: excludedDepts.size > 0 ? "0 0 0 3px rgba(255,69,58,0.15)" : "none",
+                background: excludedDepts.size > 0 ? "rgba(255,69,58,0.08)" : "var(--bg-surface)",
+                color: excludedDepts.size > 0 ? "var(--red)" : "var(--text-secondary)",
+              }}>
+              {excludedDepts.size > 0 ? `Excluding ${excludedDepts.size} Dept${excludedDepts.size > 1 ? "s" : ""}` : "Exclude Departments"}
+            </button>
+            {showDeptPanel && (
+              <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, zIndex: 100,
+                background: "var(--bg-surface)", border: "1px solid var(--border-default)",
+                borderRadius: "var(--radius-lg)", padding: "12px", minWidth: "220px",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
+                <p style={{ fontSize: "11px", fontWeight: "600", color: "var(--text-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "10px" }}>
+                  Uncheck to exclude from payroll
+                </p>
+                {departments.map(dept => (
+                  <label key={dept} style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 4px", cursor: "pointer", borderRadius: "6px" }}>
+                    <input type="checkbox" checked={!excludedDepts.has(dept)} onChange={() => toggleExclude(dept)}
+                      style={{ width: "15px", height: "15px", accentColor: "var(--accent)", cursor: "pointer" }} />
+                    <span style={{ fontSize: "13px", color: excludedDepts.has(dept) ? "var(--text-tertiary)" : "var(--text-primary)",
+                      textDecoration: excludedDepts.has(dept) ? "line-through" : "none" }}>{dept}</span>
+                  </label>
+                ))}
+                <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid var(--border-subtle)", display: "flex", gap: "8px" }}>
+                  <button onClick={() => { setExcludedDepts(new Set()); setShowDeptPanel(false); }}
+                    className="secondary-btn" style={{ fontSize: "12px", padding: "6px 12px", flex: 1 }}>Reset</button>
+                  <button onClick={() => setShowDeptPanel(false)}
+                    className="add-btn" style={{ fontSize: "12px", padding: "6px 12px", flex: 1 }}>Done</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {(filterEmployee || filterDept || excludedDepts.size > 0) && (
+          <button onClick={() => { setFilterEmployee(""); setFilterDept(""); setExcludedDepts(new Set()); }} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>✕ Clear</button>
+        )}
+
         {/* Print payslip button — only when single employee selected */}
         {filterEmployee && filtered.length === 1 && (
-          <button
-            className="add-btn"
-            onClick={() => printPayslip(filtered[0], month, year)}
-            style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}
-          >
+          <button className="add-btn" onClick={() => printPayslip(filtered[0], month, year)}
+            style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
             <Printer size={14} /> Print Payslip
           </button>
         )}
