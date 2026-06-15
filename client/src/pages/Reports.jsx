@@ -28,7 +28,7 @@ function Reports() {
       const [empRes, projRes] = await Promise.all([axios.get(`${API}/api/employees`), axios.get(`${API}/api/projects`)]);
       setEmployees(empRes.data);
       setProjects(projRes.data);
-    }
+    } catch(e) { console.log(e); }
   }
 
   async function fetchData() {
