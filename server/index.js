@@ -125,3 +125,45 @@ app.use("/api/projects", projectRoutes);
 
 app.get("/", (req, res) => res.send("Payroll Backend Running"));
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Contract workers table
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS contract_workers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT,
+    workType TEXT NOT NULL,
+    unit TEXT NOT NULL,
+    ratePerUnit REAL NOT NULL,
+    status TEXT DEFAULT 'Active',
+    notes TEXT,
+    createdAt TEXT DEFAULT (datetime('now'))
+  );`);
+} catch(e) {}
+
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS contract_work (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workerId INTEGER NOT NULL,
+    description TEXT,
+    quantity REAL NOT NULL,
+    unit TEXT,
+    ratePerUnit REAL NOT NULL,
+    amount REAL NOT NULL,
+    date TEXT NOT NULL,
+    notes TEXT
+  );`);
+} catch(e) {}
+
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS contract_advances (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workerId INTEGER NOT NULL,
+    amount REAL NOT NULL,
+    reason TEXT,
+    date TEXT NOT NULL
+  );`);
+} catch(e) {}
+
+const contractRoutes = require("./routes/contracts")(db);
+app.use("/api/contracts", contractRoutes);
