@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Users, Calendar, Wallet,
-  Clock3, BadgeIndianRupee, CreditCard, FileText, LogOut, Settings, Trash2,
+  Clock3, BadgeIndianRupee, CreditCard, FileText, LogOut, Settings, Trash2, MapPin,
 } from "lucide-react";
 
 function Sidebar({ onLogout }) {
@@ -26,6 +26,7 @@ function Sidebar({ onLogout }) {
       <div className="sidebar-section-label">Records</div>
       <ul>
         <li><NavLink to="/attendance"><Calendar size={15} /><span>Attendance</span></NavLink></li>
+        <li><NavLink to="/projects"><MapPin size={15} /><span>Projects</span></NavLink></li>
         <li><NavLink to="/advances"><Wallet size={15} /><span>Advances</span></NavLink></li>
         <li><NavLink to="/overtime"><Clock3 size={15} /><span>Overtime</span></NavLink></li>
         <li><NavLink to="/payments"><CreditCard size={15} /><span>Payments</span></NavLink></li>

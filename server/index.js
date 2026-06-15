@@ -67,6 +67,15 @@ db.exec(`
 `);
 
 try { db.exec("ALTER TABLE employees ADD COLUMN phone TEXT"); } catch(e) {}
+try { db.exec("ALTER TABLE attendance ADD COLUMN project TEXT"); } catch(e) {}
+db.exec(`CREATE TABLE IF NOT EXISTS projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  location TEXT,
+  status TEXT DEFAULT 'Active'
+);`);
+// Default project
+try { db.prepare("INSERT OR IGNORE INTO projects (id, name, location) VALUES (1, 'Main Office', 'Office')").run(); } catch(e) {}
 try { db.exec("ALTER TABLE employees ADD COLUMN notes TEXT"); } catch(e) {}
 try { db.exec("ALTER TABLE payments ADD COLUMN category TEXT"); } catch(e) {}
 
@@ -99,6 +108,7 @@ const authRoutes = require("./routes/auth")(db);
 const reportsRoutes = require("./routes/reports")(db);
 const backupRouter = require("./routes/backup")(db, scheduleCron);
 const trashRouter = require("./routes/trash")(db);
+const projectRoutes = require("./routes/projects")(db);
 
 app.use("/api/employees", employeeRoutes);
 app.use("/api/attendance", attendanceRoutes);
@@ -111,6 +121,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/backup", backupRouter);
 app.use("/api/trash", trashRouter);
+app.use("/api/projects", projectRoutes);
 
 app.get("/", (req, res) => res.send("Payroll Backend Running"));
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

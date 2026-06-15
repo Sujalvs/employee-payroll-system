@@ -16,14 +16,19 @@ function Reports() {
   const [employees, setEmployees] = useState([]);
   const [filterEmployee, setFilterEmployee] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
+  const [filterProject, setFilterProject] = useState("");
+  const [projects, setProjects] = useState([]);
   const [data, setData] = useState({ Payroll: [], Attendance: [], Advances: [], Overtime: [], Payments: [] });
 
   useEffect(() => { fetchEmployees(); }, []);
   useEffect(() => { fetchData(); }, [activeTab, month, year]);
 
   async function fetchEmployees() {
-    try { const r = await axios.get(`${API}/api/employees`); setEmployees(r.data); }
-    catch (e) { console.log(e); }
+    try {
+      const [empRes, projRes] = await Promise.all([axios.get(`${API}/api/employees`), axios.get(`${API}/api/projects`)]);
+      setEmployees(empRes.data);
+      setProjects(projRes.data);
+    }
   }
 
   async function fetchData() {
@@ -45,6 +50,7 @@ function Reports() {
   const filteredData = data[activeTab].filter(r => {
     if (filterEmployee && String(r.id) !== filterEmployee && String(r.employeeId) !== filterEmployee) return false;
     if (filterDepartment && r.department !== filterDepartment) return false;
+    if (filterProject && r.project !== filterProject) return false;
     return true;
   });
 
@@ -88,8 +94,8 @@ function Reports() {
       head = [["Employee","Dept","Wage/Day","Days","Gross","Overtime","Advances","Net Salary","Total Paid","Remaining","Excess"]];
       body = d.map(r => [r.name, r.department, "Rs." + r.wage, r.presentDays, "Rs." + r.grossSalary, "Rs." + r.totalOvertime, "Rs." + r.totalAdvance, "Rs." + r.netSalary, "Rs." + r.totalPaid, r.remaining > 0 ? "Rs." + r.remaining : "-", r.excess > 0 ? "Rs." + r.excess : "-"]);
     } else if (activeTab === "Attendance") {
-      head = [["Employee","Department","Date","Status"]];
-      body = d.map(r => [r.employeeName, r.department, r.date, r.status]);
+      head = [["Employee","Department","Date","Status","Project"]];
+      body = d.map(r => [r.employeeName, r.department, r.date, r.status, r.project || "-"]);
     } else if (activeTab === "Advances") {
       head = [["Employee","Department","Amount","Reason","Date"]];
       body = d.map(r => [r.employeeName, r.department, "Rs." + r.amount, r.reason || "-", r.date]);
@@ -195,7 +201,11 @@ function Reports() {
           <option value="">All Employees</option>
           {employees.filter(emp => !filterDepartment || emp.department === filterDepartment).map(emp => <option key={emp.id} value={String(emp.id)}>{emp.name}</option>)}
         </select>
-        {(filterEmployee || filterDepartment) && <button onClick={() => { setFilterEmployee(""); setFilterDepartment(""); }} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>Clear</button>}
+        <select value={filterProject} onChange={e => { setFilterProject(e.target.value); setFilterEmployee(""); }} style={{ ...selectStyle, minWidth: "160px" }}>
+          <option value="">All Projects</option>
+          {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+        </select>
+        {(filterEmployee || filterDepartment || filterProject) && <button onClick={() => { setFilterEmployee(""); setFilterDepartment(""); setFilterProject(""); }} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>Clear</button>}
         <div style={{ marginLeft: "auto", display: "flex", gap: "10px" }}>
           <button className="secondary-btn" onClick={exportExcel} style={{ fontSize: "13px" }}>Export Excel</button>
           <button className="delete-btn" style={{ background: "rgba(255,69,58,0.12)", border: "1px solid rgba(255,69,58,0.2)", fontSize: "13px" }} onClick={exportPDF}>Export PDF</button>

@@ -27,73 +27,79 @@ function statusBadge(status) {
 function Attendance() {
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("single");
 
   const [employee, setEmployee] = useState("");
   const [date, setDate] = useState("");
   const [status, setStatus] = useState("Present");
+  const [project, setProject] = useState("");
   const [editingId, setEditingId] = useState(null);
 
   const [bulkDate, setBulkDate] = useState(new Date().toISOString().split("T")[0]);
   const [bulkStatuses, setBulkStatuses] = useState({});
+  const [bulkProjects, setBulkProjects] = useState({});
+  const [bulkProject, setBulkProject] = useState("");
 
-  useEffect(() => { fetchAttendance(); fetchEmployees(); }, []);
+  useEffect(() => { fetchAll(); }, []);
 
-  async function fetchAttendance() {
-    try { const r = await axios.get(`${API}/api/attendance`); setRecords(r.data); }
-    catch (e) { console.log(e); }
+  async function fetchAll() {
+    const [attRes, empRes, projRes] = await Promise.all([
+      axios.get(`${API}/api/attendance`),
+      axios.get(`${API}/api/employees`),
+      axios.get(`${API}/api/projects`),
+    ]);
+    setRecords(attRes.data);
+    const active = empRes.data.filter(e => e.status === "Active");
+    setEmployees(active);
+    setProjects(projRes.data);
+    const initS = {}, initP = {};
+    active.forEach(e => { initS[e.id] = "Present"; initP[e.id] = ""; });
+    setBulkStatuses(initS);
+    setBulkProjects(initP);
   }
 
-  async function fetchEmployees() {
-    try {
-      const r = await axios.get(`${API}/api/employees`);
-      const active = r.data.filter((e) => e.status === "Active");
-      setEmployees(active);
-      const init = {};
-      active.forEach((e) => { init[e.id] = "Present"; });
-      setBulkStatuses(init);
-    } catch (e) { console.log(e); }
-  }
-
-  function clearForm() { setEmployee(""); setDate(""); setStatus("Present"); setEditingId(null); }
+  function clearForm() { setEmployee(""); setDate(""); setStatus("Present"); setProject(""); setEditingId(null); }
 
   async function saveAttendance() {
     if (!employee || !date) { toast.error("Please fill all fields"); return; }
     try {
       if (editingId) {
-        await axios.put(`${API}/api/attendance/${editingId}`, { employeeId: employee, date, status });
+        await axios.put(`${API}/api/attendance/${editingId}`, { employeeId: employee, date, status, project });
       } else {
-        await axios.post(`${API}/api/attendance`, { employeeId: employee, date, status });
+        await axios.post(`${API}/api/attendance`, { employeeId: employee, date, status, project });
       }
-      fetchAttendance(); clearForm();
+      fetchAll(); clearForm();
       toast.success(editingId ? "Attendance updated" : "Attendance saved");
     } catch (e) { toast.error("Something went wrong"); }
   }
 
   async function saveBulkAttendance() {
     if (!bulkDate) { toast.error("Please select a date"); return; }
-    const recs = employees.map((emp) => ({
+    const recs = employees.map(emp => ({
       employeeId: emp.id,
       date: bulkDate,
       status: bulkStatuses[emp.id] || "Present",
+      project: bulkProjects[emp.id] || bulkProject || null,
     }));
     try {
       await axios.post(`${API}/api/attendance/bulk`, { records: recs });
-      fetchAttendance();
+      fetchAll();
       toast.success(`Attendance saved for ${recs.length} employees`);
     } catch (e) { toast.error("Something went wrong"); }
   }
 
   function markAll(s) {
     const updated = {};
-    employees.forEach((e) => { updated[e.id] = s; });
+    employees.forEach(e => { updated[e.id] = s; });
     setBulkStatuses(updated);
   }
 
   function editRecord(record) {
     setEmployee(record.employeeId); setDate(record.date);
-    setStatus(record.status); setEditingId(record.id);
+    setStatus(record.status); setProject(record.project || "");
+    setEditingId(record.id);
     setActiveTab("single");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -102,20 +108,21 @@ function Attendance() {
     if (!await confirmDialog("This attendance record will be deleted.")) return;
     try {
       await axios.delete(`${API}/api/attendance/${id}`);
-      fetchAttendance(); toast.success("Record deleted");
+      fetchAll(); toast.success("Record deleted");
       if (editingId === id) clearForm();
     } catch (e) { console.log(e); }
   }
 
-  const filtered = records.filter((r) =>
+  const filtered = records.filter(r =>
     r.employeeName.toLowerCase().includes(search.toLowerCase()) ||
     r.date.includes(search) ||
-    r.status.toLowerCase().includes(search.toLowerCase())
+    r.status.toLowerCase().includes(search.toLowerCase()) ||
+    (r.project || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const presentCount = filtered.filter((r) => r.status === "Present").length;
-  const halfDayCount = filtered.filter((r) => r.status === "Half Day").length;
-  const absentCount = filtered.filter((r) => r.status === "Absent").length;
+  const presentCount = filtered.filter(r => r.status === "Present").length;
+  const halfDayCount = filtered.filter(r => r.status === "Half Day").length;
+  const absentCount = filtered.filter(r => r.status === "Absent").length;
 
   const btnStyle = (s, empId) => ({
     padding: "6px 12px", borderRadius: "var(--radius-md)", fontSize: "12px",
@@ -142,7 +149,7 @@ function Attendance() {
     <>
       <div style={{ marginBottom: "32px" }}>
         <h1>Attendance</h1>
-        <p className="dashboard-subtitle">Track daily employee attendance — Half Day counts as 0.5 days wage</p>
+        <p className="dashboard-subtitle">Track daily attendance with project location</p>
       </div>
 
       <div className="tab-bar" style={{ marginBottom: "24px" }}>
@@ -156,15 +163,21 @@ function Attendance() {
         <div className="form-panel">
           <h2>{editingId ? "Edit Record" : "Mark Attendance"}</h2>
           <div className="employee-form">
-            <select value={employee} onChange={(e) => setEmployee(e.target.value)}>
+            <select value={employee} onChange={e => setEmployee(e.target.value)}>
               <option value="">Select employee</option>
-              {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+              {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
             </select>
             <DatePicker value={date} onChange={setDate} placeholder="Select date" />
-            <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <select value={status} onChange={e => setStatus(e.target.value)}>
               <option>Present</option>
               <option>Half Day</option>
               <option>Absent</option>
+            </select>
+            <select value={project} onChange={e => setProject(e.target.value)}>
+              <option value="">No Project / Office</option>
+              {projects.filter(p => p.status === "Active").map(p => (
+                <option key={p.id} value={p.name}>{p.name}{p.location ? ` — ${p.location}` : ""}</option>
+              ))}
             </select>
           </div>
           {status === "Half Day" && (
@@ -185,29 +198,47 @@ function Attendance() {
           <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "16px" }}>
             Mark attendance for all active employees at once.
           </p>
-          <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "16px", flexWrap: "wrap" }}>
             <DatePicker value={bulkDate} onChange={setBulkDate} placeholder="Select date" />
+            <select value={bulkProject} onChange={e => setBulkProject(e.target.value)} style={{ minWidth: "200px" }}>
+              <option value="">Default Project for All</option>
+              {projects.filter(p => p.status === "Active").map(p => (
+                <option key={p.id} value={p.name}>{p.name}{p.location ? ` — ${p.location}` : ""}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: "flex", gap: "8px", marginBottom: "20px", flexWrap: "wrap" }}>
             <button className="add-btn" style={{ background: "var(--green)", fontSize: "12px", padding: "10px 16px" }} onClick={() => markAll("Present")}>Mark All Present</button>
             <button className="add-btn" style={{ background: "rgba(255,214,10,0.2)", color: "var(--amber)", border: "1px solid rgba(255,214,10,0.3)", fontSize: "12px", padding: "10px 16px" }} onClick={() => markAll("Half Day")}>Mark All Half Day</button>
             <button className="delete-btn" style={{ fontSize: "12px", padding: "10px 16px" }} onClick={() => markAll("Absent")}>Mark All Absent</button>
           </div>
 
           <div style={{ display: "grid", gap: "10px", marginBottom: "20px" }}>
-            {employees.map((emp) => (
+            {employees.map(emp => (
               <div key={emp.id} style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "12px 16px", background: "var(--bg-hover)",
-                borderRadius: "var(--radius-md)",
-                border: `1px solid ${borderColor(emp.id)}`,
+                borderRadius: "var(--radius-md)", border: `1px solid ${borderColor(emp.id)}`,
+                flexWrap: "wrap", gap: "10px",
               }}>
-                <div>
+                <div style={{ minWidth: "120px" }}>
                   <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "2px" }}>{emp.name}</p>
                   <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{emp.department}</p>
                 </div>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <button onClick={() => setBulkStatuses((prev) => ({ ...prev, [emp.id]: "Present" }))} style={btnStyle("Present", emp.id)}>Present</button>
-                  <button onClick={() => setBulkStatuses((prev) => ({ ...prev, [emp.id]: "Half Day" }))} style={btnStyle("Half Day", emp.id)}>Half Day</button>
-                  <button onClick={() => setBulkStatuses((prev) => ({ ...prev, [emp.id]: "Absent" }))} style={btnStyle("Absent", emp.id)}>Absent</button>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                  <button onClick={() => setBulkStatuses(prev => ({ ...prev, [emp.id]: "Present" }))} style={btnStyle("Present", emp.id)}>Present</button>
+                  <button onClick={() => setBulkStatuses(prev => ({ ...prev, [emp.id]: "Half Day" }))} style={btnStyle("Half Day", emp.id)}>Half Day</button>
+                  <button onClick={() => setBulkStatuses(prev => ({ ...prev, [emp.id]: "Absent" }))} style={btnStyle("Absent", emp.id)}>Absent</button>
+                  <select
+                    value={bulkProjects[emp.id] || ""}
+                    onChange={e => setBulkProjects(prev => ({ ...prev, [emp.id]: e.target.value }))}
+                    style={{ fontSize: "12px", padding: "6px 30px 6px 10px", minWidth: "140px" }}
+                  >
+                    <option value="">Default / Office</option>
+                    {projects.filter(p => p.status === "Active").map(p => (
+                      <option key={p.id} value={p.name}>{p.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
             ))}
@@ -222,7 +253,7 @@ function Attendance() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
         <div className="search-bar">
           <Search size={14} />
-          <input type="text" placeholder="Search records..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <input type="text" placeholder="Search by name, date, status, project..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <span className="badge badge-green">{presentCount} Present</span>
@@ -233,15 +264,16 @@ function Attendance() {
 
       <div className="table-container">
         <table className="employee-table">
-          <thead><tr><th>Employee</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Employee</th><th>Date</th><th>Status</th><th>Project</th><th>Actions</th></tr></thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={4} className="empty-state">No records found</td></tr>
-            ) : filtered.map((record) => (
+              <tr><td colSpan={5} className="empty-state">No records found</td></tr>
+            ) : filtered.map(record => (
               <tr key={record.id}>
                 <td style={{ fontWeight: "500" }}>{record.employeeName}</td>
                 <td style={{ color: "var(--text-secondary)" }}>{record.date}</td>
                 <td><span className={`badge ${statusBadge(record.status)}`}>{record.status}</span></td>
+                <td style={{ color: "var(--text-secondary)", fontSize: "13px" }}>{record.project || <span style={{ color: "var(--text-tertiary)" }}>—</span>}</td>
                 <td>
                   <div className="flex gap-2">
                     <button className="add-btn" style={{ padding: "7px 14px", fontSize: "12px" }} onClick={() => editRecord(record)}>Edit</button>

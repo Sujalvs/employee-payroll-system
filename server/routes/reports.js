@@ -32,7 +32,7 @@ module.exports = function (db) {
   router.get("/attendance", (req, res) => {
     const { mm, yyyy } = getMonthYear(req);
     try {
-      res.json(db.prepare(`SELECT a.id, e.name AS employeeName, e.department, a.date, a.status
+      res.json(db.prepare(`SELECT a.id, e.name AS employeeName, e.department, a.date, a.status, a.project
         FROM attendance a JOIN employees e ON a.employeeId=e.id
         WHERE substr(a.date,1,4)=? AND substr(a.date,6,2)=? ORDER BY a.date DESC`).all(yyyy, mm));
     } catch(e) { res.status(500).json({ message: e.message }); }
