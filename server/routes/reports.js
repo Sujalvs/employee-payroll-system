@@ -20,7 +20,7 @@ module.exports = function (db) {
       CASE WHEN COALESCE(p.totalPaid,0)>((COALESCE(a.presentDays,0)*e.wage)+COALESCE(ot.totalOvertime,0)-COALESCE(ad.totalAdvance,0))
         THEN COALESCE(p.totalPaid,0)-((COALESCE(a.presentDays,0)*e.wage)+COALESCE(ot.totalOvertime,0)-COALESCE(ad.totalAdvance,0)) ELSE 0 END AS excess
       FROM employees e
-      LEFT JOIN (SELECT employeeId, COUNT(*) AS presentDays FROM attendance WHERE status='Present' AND substr(date,1,4)=? AND substr(date,6,2)=? GROUP BY employeeId) a ON e.id=a.employeeId
+      LEFT JOIN (SELECT employeeId, SUM(CASE WHEN status='Present' THEN 1 WHEN status='Half Day' THEN 0.5 ELSE 0 END) AS presentDays FROM attendance WHERE (status='Present' OR status='Half Day') AND substr(date,1,4)=? AND substr(date,6,2)=? GROUP BY employeeId) a ON e.id=a.employeeId
       LEFT JOIN (SELECT employeeId, SUM(amount) AS totalAdvance FROM advances WHERE substr(date,1,4)=? AND substr(date,6,2)=? GROUP BY employeeId) ad ON e.id=ad.employeeId
       LEFT JOIN (SELECT employeeId, SUM(hours*rate) AS totalOvertime FROM overtime WHERE substr(date,1,4)=? AND substr(date,6,2)=? GROUP BY employeeId) ot ON e.id=ot.employeeId
       LEFT JOIN (SELECT employeeId, SUM(amount) AS totalPaid FROM payments WHERE substr(date,1,4)=? AND substr(date,6,2)=? GROUP BY employeeId) p ON e.id=p.employeeId

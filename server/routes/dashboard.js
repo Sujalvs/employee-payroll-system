@@ -12,7 +12,7 @@ module.exports = function (db) {
       const mm = String(d.getMonth() + 1).padStart(2, "0");
       try {
         const row = db.prepare(`SELECT COALESCE(SUM(
-          (SELECT COUNT(*) FROM attendance a WHERE a.employeeId = e.id AND a.status='Present'
+          (SELECT COUNT(*) FROM attendance a WHERE a.employeeId = e.id AND (a.status='Present' OR a.status='Half Day')
            AND substr(a.date,1,4)=? AND substr(a.date,6,2)=?) * e.wage
         ),0) AS payroll FROM employees e WHERE e.status='Active'`).get(yyyy, mm);
         results.push({ month: monthNames[d.getMonth()], payroll: row?.payroll || 0 });

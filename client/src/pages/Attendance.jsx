@@ -18,19 +18,23 @@ async function confirmDialog(message) {
   return window.confirm(message);
 }
 
+function statusBadge(status) {
+  if (status === "Present") return "badge-green";
+  if (status === "Half Day") return "badge-amber";
+  return "badge-red";
+}
+
 function Attendance() {
   const [records, setRecords] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("single"); // "single" | "bulk"
+  const [activeTab, setActiveTab] = useState("single");
 
-  // Single form
   const [employee, setEmployee] = useState("");
   const [date, setDate] = useState("");
   const [status, setStatus] = useState("Present");
   const [editingId, setEditingId] = useState(null);
 
-  // Bulk form
   const [bulkDate, setBulkDate] = useState(new Date().toISOString().split("T")[0]);
   const [bulkStatuses, setBulkStatuses] = useState({});
 
@@ -46,7 +50,6 @@ function Attendance() {
       const r = await axios.get(`${API}/api/employees`);
       const active = r.data.filter((e) => e.status === "Active");
       setEmployees(active);
-      // Init bulk statuses
       const init = {};
       active.forEach((e) => { init[e.id] = "Present"; });
       setBulkStatuses(init);
@@ -56,7 +59,7 @@ function Attendance() {
   function clearForm() { setEmployee(""); setDate(""); setStatus("Present"); setEditingId(null); }
 
   async function saveAttendance() {
-    if (!employee || !date) { toast.error(`Please fill all fields`); return; }
+    if (!employee || !date) { toast.error("Please fill all fields"); return; }
     try {
       if (editingId) {
         await axios.put(`${API}/api/attendance/${editingId}`, { employeeId: employee, date, status });
@@ -70,21 +73,21 @@ function Attendance() {
 
   async function saveBulkAttendance() {
     if (!bulkDate) { toast.error("Please select a date"); return; }
-    const records = employees.map((emp) => ({
+    const recs = employees.map((emp) => ({
       employeeId: emp.id,
       date: bulkDate,
-      status: bulkStatuses[emp.id] || `Present`,
+      status: bulkStatuses[emp.id] || "Present",
     }));
     try {
-      await axios.post(`${API}/api/attendance/bulk`, { records });
+      await axios.post(`${API}/api/attendance/bulk`, { records: recs });
       fetchAttendance();
-      toast.success(`Attendance saved for ${records.length} employees`);
+      toast.success(`Attendance saved for ${recs.length} employees`);
     } catch (e) { toast.error("Something went wrong"); }
   }
 
-  function markAll(status) {
+  function markAll(s) {
     const updated = {};
-    employees.forEach((e) => { updated[e.id] = status; });
+    employees.forEach((e) => { updated[e.id] = s; });
     setBulkStatuses(updated);
   }
 
@@ -96,10 +99,10 @@ function Attendance() {
   }
 
   async function deleteRecord(id) {
-    if (!await confirmDialog(`This attendance record will be deleted.`)) return;
+    if (!await confirmDialog("This attendance record will be deleted.")) return;
     try {
       await axios.delete(`${API}/api/attendance/${id}`);
-      fetchAttendance(); toast.success(`Record deleted`);
+      fetchAttendance(); toast.success("Record deleted");
       if (editingId === id) clearForm();
     } catch (e) { console.log(e); }
   }
@@ -111,27 +114,44 @@ function Attendance() {
   );
 
   const presentCount = filtered.filter((r) => r.status === "Present").length;
+  const halfDayCount = filtered.filter((r) => r.status === "Half Day").length;
   const absentCount = filtered.filter((r) => r.status === "Absent").length;
+
+  const btnStyle = (s, empId) => ({
+    padding: "6px 12px", borderRadius: "var(--radius-md)", fontSize: "12px",
+    fontWeight: "600", cursor: "pointer", fontFamily: "inherit",
+    background: bulkStatuses[empId] === s
+      ? s === "Present" ? "rgba(48,209,88,0.15)" : s === "Half Day" ? "rgba(255,214,10,0.15)" : "rgba(255,69,58,0.15)"
+      : "var(--bg-surface)",
+    color: bulkStatuses[empId] === s
+      ? s === "Present" ? "var(--green)" : s === "Half Day" ? "var(--amber)" : "var(--red)"
+      : "var(--text-secondary)",
+    border: bulkStatuses[empId] === s
+      ? s === "Present" ? "1px solid rgba(48,209,88,0.4)" : s === "Half Day" ? "1px solid rgba(255,214,10,0.4)" : "1px solid rgba(255,69,58,0.4)"
+      : "1px solid var(--border-default)",
+  });
+
+  const borderColor = (empId) => {
+    const s = bulkStatuses[empId];
+    if (s === "Present") return "rgba(48,209,88,0.2)";
+    if (s === "Half Day") return "rgba(255,214,10,0.3)";
+    return "rgba(255,69,58,0.3)";
+  };
 
   return (
     <>
       <div style={{ marginBottom: "32px" }}>
         <h1>Attendance</h1>
-        <p className="dashboard-subtitle">Track daily employee attendance</p>
+        <p className="dashboard-subtitle">Track daily employee attendance — Half Day counts as 0.5 days wage</p>
       </div>
 
-      {/* Tab switcher */}
       <div className="tab-bar" style={{ marginBottom: "24px" }}>
-        <button className={`tab-btn ${activeTab === "single" ? "active" : ""}`} onClick={() => setActiveTab("single")}>
-          Single Entry
-        </button>
+        <button className={`tab-btn ${activeTab === "single" ? "active" : ""}`} onClick={() => setActiveTab("single")}>Single Entry</button>
         <button className={`tab-btn ${activeTab === "bulk" ? "active" : ""}`} onClick={() => setActiveTab("bulk")}>
-          <CheckSquare size={13} style={{ marginRight: "6px", verticalAlign: "middle" }} />
-          Bulk Mark
+          <CheckSquare size={13} style={{ marginRight: "6px", verticalAlign: "middle" }} />Bulk Mark
         </button>
       </div>
 
-      {/* Single entry form */}
       {activeTab === "single" && (
         <div className="form-panel">
           <h2>{editingId ? "Edit Record" : "Mark Attendance"}</h2>
@@ -143,34 +163,33 @@ function Attendance() {
             <DatePicker value={date} onChange={setDate} placeholder="Select date" />
             <select value={status} onChange={(e) => setStatus(e.target.value)}>
               <option>Present</option>
+              <option>Half Day</option>
               <option>Absent</option>
             </select>
           </div>
+          {status === "Half Day" && (
+            <div style={{ marginTop: "12px", padding: "10px 14px", background: "rgba(255,214,10,0.08)", border: "1px solid rgba(255,214,10,0.25)", borderRadius: "var(--radius-md)", fontSize: "13px", color: "var(--amber)" }}>
+              Half Day = 0.5 × daily wage will be calculated for this day
+            </div>
+          )}
           <div className="form-actions" style={{ marginTop: "16px" }}>
-            <button className="add-btn" onClick={saveAttendance}>
-              {editingId ? "Update Record" : "Save Attendance"}
-            </button>
+            <button className="add-btn" onClick={saveAttendance}>{editingId ? "Update Record" : "Save Attendance"}</button>
             {editingId && <button className="secondary-btn" onClick={clearForm}>Cancel</button>}
           </div>
         </div>
       )}
 
-      {/* Bulk entry */}
       {activeTab === "bulk" && (
         <div className="form-panel">
           <h2>Bulk Mark Attendance</h2>
           <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "16px" }}>
-            Mark attendance for all active employees on a single date at once.
+            Mark attendance for all active employees at once.
           </p>
-
           <div style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" }}>
             <DatePicker value={bulkDate} onChange={setBulkDate} placeholder="Select date" />
-            <button className="add-btn" style={{ background: "var(--green)", fontSize: "12px", padding: "10px 16px" }} onClick={() => markAll("Present")}>
-              Mark All Present
-            </button>
-            <button className="delete-btn" style={{ fontSize: "12px", padding: "10px 16px" }} onClick={() => markAll("Absent")}>
-              Mark All Absent
-            </button>
+            <button className="add-btn" style={{ background: "var(--green)", fontSize: "12px", padding: "10px 16px" }} onClick={() => markAll("Present")}>Mark All Present</button>
+            <button className="add-btn" style={{ background: "rgba(255,214,10,0.2)", color: "var(--amber)", border: "1px solid rgba(255,214,10,0.3)", fontSize: "12px", padding: "10px 16px" }} onClick={() => markAll("Half Day")}>Mark All Half Day</button>
+            <button className="delete-btn" style={{ fontSize: "12px", padding: "10px 16px" }} onClick={() => markAll("Absent")}>Mark All Absent</button>
           </div>
 
           <div style={{ display: "grid", gap: "10px", marginBottom: "20px" }}>
@@ -179,33 +198,16 @@ function Attendance() {
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "12px 16px", background: "var(--bg-hover)",
                 borderRadius: "var(--radius-md)",
-                border: `1px solid ${bulkStatuses[emp.id] === "Absent" ? "rgba(255,69,58,0.3)" : "rgba(48,209,88,0.2)"}`,
+                border: `1px solid ${borderColor(emp.id)}`,
               }}>
                 <div>
                   <p style={{ fontWeight: "600", fontSize: "14px", marginBottom: "2px" }}>{emp.name}</p>
                   <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>{emp.department}</p>
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
-                  <button
-                    onClick={() => setBulkStatuses((prev) => ({ ...prev, [emp.id]: "Present" }))}
-                    style={{
-                      padding: "6px 14px", borderRadius: "var(--radius-md)", fontSize: "12px",
-                      fontWeight: "600", border: "none", cursor: "pointer",
-                      background: bulkStatuses[emp.id] === "Present" ? "rgba(48,209,88,0.15)" : "var(--bg-surface)",
-                      color: bulkStatuses[emp.id] === "Present" ? "var(--green)" : "var(--text-secondary)",
-                      border: bulkStatuses[emp.id] === "Present" ? "1px solid rgba(48,209,88,0.4)" : "1px solid var(--border-default)",
-                    }}
-                  >Present</button>
-                  <button
-                    onClick={() => setBulkStatuses((prev) => ({ ...prev, [emp.id]: "Absent" }))}
-                    style={{
-                      padding: "6px 14px", borderRadius: "var(--radius-md)", fontSize: "12px",
-                      fontWeight: "600", border: "none", cursor: "pointer",
-                      background: bulkStatuses[emp.id] === "Absent" ? "rgba(255,69,58,0.15)" : "var(--bg-surface)",
-                      color: bulkStatuses[emp.id] === "Absent" ? "var(--red)" : "var(--text-secondary)",
-                      border: bulkStatuses[emp.id] === "Absent" ? "1px solid rgba(255,69,58,0.4)" : "1px solid var(--border-default)",
-                    }}
-                  >Absent</button>
+                  <button onClick={() => setBulkStatuses((prev) => ({ ...prev, [emp.id]: "Present" }))} style={btnStyle("Present", emp.id)}>Present</button>
+                  <button onClick={() => setBulkStatuses((prev) => ({ ...prev, [emp.id]: "Half Day" }))} style={btnStyle("Half Day", emp.id)}>Half Day</button>
+                  <button onClick={() => setBulkStatuses((prev) => ({ ...prev, [emp.id]: "Absent" }))} style={btnStyle("Absent", emp.id)}>Absent</button>
                 </div>
               </div>
             ))}
@@ -217,7 +219,6 @@ function Attendance() {
         </div>
       )}
 
-      {/* Records table */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
         <div className="search-bar">
           <Search size={14} />
@@ -225,15 +226,14 @@ function Attendance() {
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <span className="badge badge-green">{presentCount} Present</span>
+          {halfDayCount > 0 && <span className="badge badge-amber">{halfDayCount} Half Day</span>}
           <span className="badge badge-red">{absentCount} Absent</span>
         </div>
       </div>
 
       <div className="table-container">
         <table className="employee-table">
-          <thead>
-            <tr><th>Employee</th><th>Date</th><th>Status</th><th>Actions</th></tr>
-          </thead>
+          <thead><tr><th>Employee</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr><td colSpan={4} className="empty-state">No records found</td></tr>
@@ -241,7 +241,7 @@ function Attendance() {
               <tr key={record.id}>
                 <td style={{ fontWeight: "500" }}>{record.employeeName}</td>
                 <td style={{ color: "var(--text-secondary)" }}>{record.date}</td>
-                <td><span className={`badge ${record.status === "Present" ? "badge-green" : "badge-red"}`}>{record.status}</span></td>
+                <td><span className={`badge ${statusBadge(record.status)}`}>{record.status}</span></td>
                 <td>
                   <div className="flex gap-2">
                     <button className="add-btn" style={{ padding: "7px 14px", fontSize: "12px" }} onClick={() => editRecord(record)}>Edit</button>
