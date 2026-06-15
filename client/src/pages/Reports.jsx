@@ -15,6 +15,7 @@ function Reports() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [employees, setEmployees] = useState([]);
   const [filterEmployee, setFilterEmployee] = useState("");
+  const [filterDepartment, setFilterDepartment] = useState("");
   const [data, setData] = useState({ Payroll: [], Attendance: [], Advances: [], Overtime: [], Payments: [] });
 
   useEffect(() => { fetchEmployees(); }, []);
@@ -39,16 +40,21 @@ function Reports() {
     } catch (e) { console.log(e); }
   }
 
-  const filteredData = filterEmployee
-    ? data[activeTab].filter(r => String(r.id) === filterEmployee || String(r.employeeId) === filterEmployee)
-    : data[activeTab];
+  const departments = [...new Set(employees.map(e => e.department))].sort();
+
+  const filteredData = data[activeTab].filter(r => {
+    if (filterEmployee && String(r.id) !== filterEmployee && String(r.employeeId) !== filterEmployee) return false;
+    if (filterDepartment && r.department !== filterDepartment) return false;
+    return true;
+  });
 
   function exportExcel() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(filteredData), activeTab);
     const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : "";
-    const suffix = empName ? "_" + empName.replace(/ /g, "_") : "";
+    const deptName = filterDepartment || "";
+    const suffix = empName ? "_" + empName.replace(/ /g, "_") : deptName ? "_" + deptName.replace(/ /g, "_") : "";
     saveAs(new Blob([buf], { type: "application/octet-stream" }), `${activeTab}_${MONTH_NAMES[month]}_${year}${suffix}.xlsx`);
   }
 
@@ -116,7 +122,7 @@ function Reports() {
   }
 
   function printReport() {
-    const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : "All Employees";
+    const empName = filterEmployee ? employees.find(e => String(e.id) === filterEmployee)?.name : filterDepartment ? filterDepartment + " Dept" : "All Employees";
     const d = filteredData;
     let headers = [], rows = [];
     if (activeTab === "Payroll") {
@@ -181,11 +187,15 @@ function Reports() {
         <select value={year} onChange={e => setYear(e.target.value)} style={selectStyle}>
           {Array.from({ length: 10 }, (_, i) => { const y = new Date().getFullYear() - 3 + i; return <option key={y} value={y}>{y}</option>; })}
         </select>
-        <select value={filterEmployee} onChange={e => setFilterEmployee(e.target.value)} style={{ ...selectStyle, minWidth: "180px" }}>
-          <option value="">All Employees</option>
-          {employees.map(emp => <option key={emp.id} value={String(emp.id)}>{emp.name}</option>)}
+        <select value={filterDepartment} onChange={e => { setFilterDepartment(e.target.value); setFilterEmployee(""); }} style={{ ...selectStyle, minWidth: "160px" }}>
+          <option value="">All Departments</option>
+          {departments.map(dept => <option key={dept} value={dept}>{dept}</option>)}
         </select>
-        {filterEmployee && <button onClick={() => setFilterEmployee("")} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>Clear</button>}
+        <select value={filterEmployee} onChange={e => { setFilterEmployee(e.target.value); setFilterDepartment(""); }} style={{ ...selectStyle, minWidth: "180px" }}>
+          <option value="">All Employees</option>
+          {employees.filter(emp => !filterDepartment || emp.department === filterDepartment).map(emp => <option key={emp.id} value={String(emp.id)}>{emp.name}</option>)}
+        </select>
+        {(filterEmployee || filterDepartment) && <button onClick={() => { setFilterEmployee(""); setFilterDepartment(""); }} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>Clear</button>}
         <div style={{ marginLeft: "auto", display: "flex", gap: "10px" }}>
           <button className="secondary-btn" onClick={exportExcel} style={{ fontSize: "13px" }}>Export Excel</button>
           <button className="delete-btn" style={{ background: "rgba(255,69,58,0.12)", border: "1px solid rgba(255,69,58,0.2)", fontSize: "13px" }} onClick={exportPDF}>Export PDF</button>
