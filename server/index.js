@@ -67,6 +67,13 @@ db.exec(`
 `);
 
 try { db.exec("ALTER TABLE employees ADD COLUMN phone TEXT"); } catch(e) {}
+try { db.exec(`CREATE TABLE IF NOT EXISTS earlyleave (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  employeeId INTEGER NOT NULL,
+  hours REAL NOT NULL,
+  rate REAL NOT NULL,
+  date TEXT NOT NULL
+);`); } catch(e) {}
 try { db.exec("ALTER TABLE attendance ADD COLUMN project TEXT"); } catch(e) {}
 db.exec(`CREATE TABLE IF NOT EXISTS projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,6 +115,7 @@ const authRoutes = require("./routes/auth")(db);
 const reportsRoutes = require("./routes/reports")(db);
 const backupRouter = require("./routes/backup")(db, scheduleCron);
 const trashRouter = require("./routes/trash")(db);
+const earlyLeaveRouter = require("./routes/earlyleave")(db);
 const projectRoutes = require("./routes/projects")(db);
 
 app.use("/api/employees", employeeRoutes);
@@ -121,6 +129,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/backup", backupRouter);
 app.use("/api/trash", trashRouter);
+app.use("/api/earlyleave", earlyLeaveRouter);
 app.use("/api/projects", projectRoutes);
 
 app.get("/", (req, res) => res.send("Payroll Backend Running"));

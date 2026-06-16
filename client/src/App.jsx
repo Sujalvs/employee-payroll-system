@@ -14,6 +14,7 @@ import Settings from "./pages/Settings";
 import Trash from "./pages/Trash";
 import Projects from "./pages/Projects";
 import Contracts from "./pages/Contracts";
+import EarlyLeave from "./pages/EarlyLeave";
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -39,6 +40,7 @@ function App() {
           <Route path="trash" element={<Trash />} />
           <Route path="projects" element={<Projects />} />
           <Route path="contracts" element={<Contracts />} />
+          <Route path="earlyleave" element={<EarlyLeave />} />
         </Route>
       </Routes>
     </BrowserRouter>
