@@ -21,7 +21,7 @@ function Reports() {
   const [data, setData] = useState({ Payroll: [], Attendance: [], Advances: [], Overtime: [], Payments: [] });
 
   useEffect(() => { fetchEmployees(); }, []);
-  useEffect(() => { fetchData(); }, [activeTab, month, year]);
+  useEffect(() => { fetchData(); }, [activeTab, month, year, filterProject]);
 
   async function fetchEmployees() {
     try {
@@ -33,7 +33,7 @@ function Reports() {
 
   async function fetchData() {
     const endpoints = {
-      Payroll: `${API}/api/reports/payroll?month=${month}&year=${year}`,
+      Payroll: `${API}/api/reports/payroll?month=${month}&year=${year}${filterProject ? "&project=" + encodeURIComponent(filterProject) : ""}`,
       Attendance: `${API}/api/reports/attendance?month=${month}&year=${year}`,
       Advances: `${API}/api/reports/advances?month=${month}&year=${year}`,
       Overtime: `${API}/api/reports/overtime?month=${month}&year=${year}`,
@@ -201,7 +201,7 @@ function Reports() {
           <option value="">All Employees</option>
           {employees.filter(emp => !filterDepartment || emp.department === filterDepartment).map(emp => <option key={emp.id} value={String(emp.id)}>{emp.name}</option>)}
         </select>
-        {activeTab === "Attendance" && (
+        {(activeTab === "Attendance" || activeTab === "Payroll") && (
           <select value={filterProject} onChange={e => { setFilterProject(e.target.value); setFilterEmployee(""); }} style={{ ...selectStyle, minWidth: "160px" }}>
             <option value="">All Projects</option>
             {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
