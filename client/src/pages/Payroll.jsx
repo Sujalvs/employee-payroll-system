@@ -371,11 +371,11 @@ function Payroll() {
       <div className="table-container" style={{ overflowX: "auto" }}>
         <table className="employee-table">
           <thead>
-            <tr><th>Employee</th><th>Dept</th><th>Wage/Day</th><th>Days Present</th><th>Gross</th><th>Overtime</th><th>Advances</th><th>Net Salary</th><th>Total Paid</th><th>Remaining</th><th>Excess</th><th>Payslip</th></tr>
+            <tr><th>Employee</th><th>Dept</th><th>Wage/Day</th><th>Days Present</th><th>Gross</th><th>Overtime</th><th>Advances</th><th>Early Leave</th><th>Net Salary</th><th>Total Paid</th><th>Remaining</th><th>Excess</th><th>Payslip</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={12} className="empty-state">{payroll.length === 0 ? `No payroll data for ${MONTH_NAMES[month]} ${year}` : "No employee found"}</td></tr>
+              <tr><td colSpan={13} className="empty-state">{payroll.length === 0 ? `No payroll data for ${MONTH_NAMES[month]} ${year}` : "No employee found"}</td></tr>
             ) : filtered.map((emp) => (
               <tr key={emp.id}>
                 <td style={{ fontWeight: "600" }}>{emp.name}</td>
@@ -385,6 +385,7 @@ function Payroll() {
                 <td>₹{emp.grossSalary?.toLocaleString()}</td>
                 <td style={{ color: "var(--accent)" }}>₹{emp.totalOvertime?.toLocaleString()}</td>
                 <td style={{ color: "var(--amber)" }}>₹{emp.totalAdvance?.toLocaleString()}</td>
+                <td style={{ color: "var(--red)" }}>{emp.totalEarlyLeave > 0 ? `−₹${emp.totalEarlyLeave?.toLocaleString()}` : "—"}</td>
                 <td><span className={`badge ${emp.netSalary >= 0 ? "badge-green" : "badge-red"}`}>₹{emp.netSalary?.toLocaleString()}</span></td>
                 <td><span className="badge badge-blue">₹{emp.totalPaid?.toLocaleString()}</span></td>
                 <td>{emp.remaining > 0 ? <span className="badge badge-amber">₹{emp.remaining?.toLocaleString()}</span> : <span style={{ color: "var(--text-tertiary)" }}>—</span>}</td>

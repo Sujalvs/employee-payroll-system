@@ -92,7 +92,7 @@ function Reports() {
     const d = filteredData;
     if (activeTab === "Payroll") {
       head = [["Employee","Dept","Wage/Day","Days","Gross","Overtime","Advances","Net Salary","Total Paid","Remaining","Excess"]];
-      body = d.map(r => [r.name, r.department, "Rs." + r.wage, r.presentDays, "Rs." + r.grossSalary, "Rs." + r.totalOvertime, "Rs." + r.totalAdvance, "Rs." + r.netSalary, "Rs." + r.totalPaid, r.remaining > 0 ? "Rs." + r.remaining : "-", r.excess > 0 ? "Rs." + r.excess : "-"]);
+      body = d.map(r => [r.name, r.department, "Rs." + r.wage, r.presentDays, "Rs." + r.grossSalary, "Rs." + r.totalOvertime, "Rs." + r.totalAdvance, r.totalEarlyLeave > 0 ? "-Rs." + r.totalEarlyLeave : "-", "Rs." + r.netSalary, "Rs." + r.totalPaid, r.remaining > 0 ? "Rs." + r.remaining : "-", r.excess > 0 ? "Rs." + r.excess : "-"]);
     } else if (activeTab === "Attendance") {
       head = [["Employee","Department","Date","Status","Project"]];
       body = d.map(r => [r.employeeName, r.department, r.date, r.status, r.project || "-"]);
@@ -133,7 +133,7 @@ function Reports() {
     let headers = [], rows = [];
     if (activeTab === "Payroll") {
       headers = ["Employee","Department","Wage/Day","Days","Gross","Overtime","Advances","Net Salary","Total Paid","Remaining","Excess"];
-      rows = d.map(r => [r.name, r.department, "Rs." + r.wage, r.presentDays, "Rs." + r.grossSalary, "Rs." + r.totalOvertime, "Rs." + r.totalAdvance, "Rs." + r.netSalary, "Rs." + r.totalPaid, r.remaining > 0 ? "Rs." + r.remaining : "-", r.excess > 0 ? "Rs." + r.excess : "-"]);
+      rows = d.map(r => [r.name, r.department, "Rs." + r.wage, r.presentDays, "Rs." + r.grossSalary, "Rs." + r.totalOvertime, "Rs." + r.totalAdvance, r.totalEarlyLeave > 0 ? "-Rs." + r.totalEarlyLeave : "-", "Rs." + r.netSalary, "Rs." + r.totalPaid, r.remaining > 0 ? "Rs." + r.remaining : "-", r.excess > 0 ? "Rs." + r.excess : "-"]);
     } else if (activeTab === "Attendance") {
       headers = ["Employee","Department","Date","Status"];
       rows = d.map(r => [r.employeeName, r.department, r.date, r.status]);
@@ -218,10 +218,10 @@ function Reports() {
       <div className="table-container" style={{ overflowX: "auto" }}>
         {activeTab === "Payroll" && (
           <table className="employee-table">
-            <thead><tr><th>Employee</th><th>Dept</th><th>Wage</th><th>Days</th><th>Gross</th><th>OT</th><th>Advances</th><th>Net</th><th>Paid</th><th>Remaining</th><th>Excess</th></tr></thead>
+            <thead><tr><th>Employee</th><th>Dept</th><th>Wage</th><th>Days</th><th>Gross</th><th>OT</th><th>Advances</th><th>Early Leave</th><th>Net</th><th>Paid</th><th>Remaining</th><th>Excess</th></tr></thead>
             <tbody>
-              {filteredData.length === 0 ? <tr><td colSpan={11} className="empty-state">No data</td></tr>
-              : filteredData.map((r, i) => <tr key={i}><td>{r.name}</td><td>{r.department}</td><td>Rs.{r.wage}</td><td>{r.presentDays}</td><td>Rs.{r.grossSalary?.toLocaleString()}</td><td>Rs.{r.totalOvertime?.toLocaleString()}</td><td>Rs.{r.totalAdvance?.toLocaleString()}</td><td><span className={`badge ${r.netSalary >= 0 ? "badge-green" : "badge-red"}`}>Rs.{r.netSalary?.toLocaleString()}</span></td><td>Rs.{r.totalPaid?.toLocaleString()}</td><td>{r.remaining > 0 ? "Rs." + r.remaining?.toLocaleString() : "-"}</td><td>{r.excess > 0 ? "Rs." + r.excess?.toLocaleString() : "-"}</td></tr>)}
+              {filteredData.length === 0 ? <tr><td colSpan={12} className="empty-state">No data</td></tr>
+              : filteredData.map((r, i) => <tr key={i}><td>{r.name}</td><td>{r.department}</td><td>Rs.{r.wage}</td><td>{r.presentDays}</td><td>Rs.{r.grossSalary?.toLocaleString()}</td><td>Rs.{r.totalOvertime?.toLocaleString()}</td><td>Rs.{r.totalAdvance?.toLocaleString()}</td><td style={{color:"var(--red)"}}>{r.totalEarlyLeave > 0 ? "-Rs." + r.totalEarlyLeave?.toLocaleString() : "—"}</td><td><span className={`badge ${r.netSalary >= 0 ? "badge-green" : "badge-red"}`}>Rs.{r.netSalary?.toLocaleString()}</span></td><td>Rs.{r.totalPaid?.toLocaleString()}</td><td>{r.remaining > 0 ? "Rs." + r.remaining?.toLocaleString() : "-"}</td><td>{r.excess > 0 ? "Rs." + r.excess?.toLocaleString() : "-"}</td></tr>)}
             </tbody>
           </table>
         )}
