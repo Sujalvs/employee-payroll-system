@@ -34,7 +34,7 @@ module.exports = function (db) {
 
     if (project) {
       query += " AND e.id IN (SELECT DISTINCT employeeId FROM attendance WHERE (project=? OR (project IS NULL AND ?='Main Office')) AND substr(date,1,4)=? AND substr(date,6,2)=?)";
-      params = params.concat([project, yyyy, mm]);
+      params = params.concat([project, project, yyyy, mm]);
     }
 
     try { res.json(db.prepare(query).all(...params)); }
