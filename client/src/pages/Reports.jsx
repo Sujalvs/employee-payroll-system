@@ -50,7 +50,7 @@ function Reports() {
   const filteredData = data[activeTab].filter(r => {
     if (filterEmployee && String(r.id) !== filterEmployee && String(r.employeeId) !== filterEmployee) return false;
     if (filterDepartment && r.department !== filterDepartment) return false;
-    if (filterProject && r.project !== filterProject) return false;
+    if (filterProject && activeTab === "Attendance" && r.project !== filterProject) return false;
     return true;
   });
 
@@ -201,10 +201,12 @@ function Reports() {
           <option value="">All Employees</option>
           {employees.filter(emp => !filterDepartment || emp.department === filterDepartment).map(emp => <option key={emp.id} value={String(emp.id)}>{emp.name}</option>)}
         </select>
-        <select value={filterProject} onChange={e => { setFilterProject(e.target.value); setFilterEmployee(""); }} style={{ ...selectStyle, minWidth: "160px" }}>
-          <option value="">All Projects</option>
-          {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
-        </select>
+        {activeTab === "Attendance" && (
+          <select value={filterProject} onChange={e => { setFilterProject(e.target.value); setFilterEmployee(""); }} style={{ ...selectStyle, minWidth: "160px" }}>
+            <option value="">All Projects</option>
+            {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+          </select>
+        )}
         {(filterEmployee || filterDepartment || filterProject) && <button onClick={() => { setFilterEmployee(""); setFilterDepartment(""); setFilterProject(""); }} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>Clear</button>}
         <div style={{ marginLeft: "auto", display: "flex", gap: "10px" }}>
           <button className="secondary-btn" onClick={exportExcel} style={{ fontSize: "13px" }}>Export Excel</button>
