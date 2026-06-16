@@ -223,12 +223,18 @@ function Payroll() {
   const [filterDept, setFilterDept] = useState(""); // single dept
   const [excludedDepts, setExcludedDepts] = useState(new Set()); // multi-exclude
   const [showDeptPanel, setShowDeptPanel] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [filterProject, setFilterProject] = useState("");
 
-  useEffect(() => { fetchPayroll(); }, [month, year]);
+  useEffect(() => { fetchPayroll(); fetchProjects(); }, [month, year, filterProject]);
+
+  async function fetchProjects() {
+    try { const r = await axios.get(`${API}/api/projects`); setProjects(r.data); } catch(e) {}
+  }
 
   async function fetchPayroll() {
     try {
-      const r = await axios.get(`${API}/api/payroll?month=${month}&year=${year}`);
+      const r = await axios.get(`${API}/api/payroll?month=${month}&year=${year}${filterProject ? '&project=' + encodeURIComponent(filterProject) : ''}`);
       setPayroll(r.data);
     } catch (e) { console.log(e); }
   }
@@ -281,8 +287,17 @@ function Payroll() {
           {payroll.filter(e => !filterDept || e.department === filterDept).map(emp => <option key={emp.id} value={String(emp.id)}>{emp.name}</option>)}
         </select>
 
+        {/* Project filter */}
+        {!filterEmployee && (
+          <select value={filterProject} onChange={e => { setFilterProject(e.target.value); setFilterDept(""); setFilterEmployee(""); setExcludedDepts(new Set()); }}
+            style={{ ...selectStyle, minWidth: "160px", borderColor: filterProject ? "var(--accent)" : "var(--border-default)", boxShadow: filterProject ? "0 0 0 3px var(--accent-glow)" : "none" }}>
+            <option value="">All Projects</option>
+            {projects.map(p => <option key={p.id} value={p.name}>{p.name}</option>)}
+          </select>
+        )}
+
         {/* Exclude departments button */}
-        {!filterEmployee && !filterDept && (
+        {!filterEmployee && !filterDept && !filterProject && (
           <div style={{ position: "relative" }}>
             <button onClick={() => setShowDeptPanel(p => !p)}
               style={{ ...selectStyle, minWidth: "auto", padding: "10px 16px", cursor: "pointer",
@@ -320,8 +335,8 @@ function Payroll() {
           </div>
         )}
 
-        {(filterEmployee || filterDept || excludedDepts.size > 0) && (
-          <button onClick={() => { setFilterEmployee(""); setFilterDept(""); setExcludedDepts(new Set()); }} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>✕ Clear</button>
+        {(filterEmployee || filterDept || excludedDepts.size > 0 || filterProject) && (
+          <button onClick={() => { setFilterEmployee(""); setFilterDept(""); setExcludedDepts(new Set()); setFilterProject(""); }} className="secondary-btn" style={{ padding: "10px 16px", fontSize: "13px" }}>✕ Clear</button>
         )}
 
         {/* Print payslip button — only when single employee selected */}

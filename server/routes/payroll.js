@@ -7,6 +7,7 @@ module.exports = function (db) {
     const year = req.query.year || new Date().getFullYear();
     const mm = String(month).padStart(2, "0");
     const yyyy = String(year);
+    const project = req.query.project || null;
     const query = `
       SELECT e.id, e.name, e.department, e.wage, e.status,
         COALESCE(a.presentDays, 0) AS presentDays,
@@ -28,8 +29,11 @@ module.exports = function (db) {
       LEFT JOIN (SELECT employeeId, SUM(amount) AS totalPaid FROM payments WHERE substr(date,1,4)=? AND substr(date,6,2)=? GROUP BY employeeId) p ON e.id=p.employeeId
       LEFT JOIN (SELECT employeeId, SUM(hours*rate) AS totalEarlyLeave FROM earlyleave WHERE substr(date,1,4)=? AND substr(date,6,2)=? GROUP BY employeeId) el ON e.id=el.employeeId
       WHERE e.status='Active'`;
+    const projectQuery = query + " AND e.id IN (SELECT DISTINCT employeeId FROM attendance WHERE project=? AND substr(date,1,4)=? AND substr(date,6,2)=?)";
+    const finalQuery = project ? projectQuery : query;
+    const params = project ? [yyyy, mm, yyyy, mm, yyyy, mm, yyyy, mm, yyyy, mm, project, yyyy, mm] : [yyyy, mm, yyyy, mm, yyyy, mm, yyyy, mm, yyyy, mm];
     try {
-      res.json(db.prepare(query).all(yyyy, mm, yyyy, mm, yyyy, mm, yyyy, mm, yyyy, mm));
+      res.json(db.prepare(finalQuery).all(...params));
     } catch(e) { res.status(500).json({ message: e.message }); }
   });
 
