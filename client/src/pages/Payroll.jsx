@@ -382,14 +382,14 @@ function Payroll() {
                 <td style={{ color: "var(--text-secondary)" }}>{emp.department}</td>
                 <td>₹{emp.wage}</td>
                 <td>{emp.presentDays}</td>
-                <td>₹{emp.grossSalary?.toLocaleString()}</td>
-                <td style={{ color: "var(--accent)" }}>₹{emp.totalOvertime?.toLocaleString()}</td>
-                <td style={{ color: "var(--amber)" }}>₹{emp.totalAdvance?.toLocaleString()}</td>
+                <td>₹{Math.round(emp.grossSalary).toLocaleString()}</td>
+                <td style={{ color: "var(--accent)" }}>₹{Math.round(emp.totalOvertime).toLocaleString()}</td>
+                <td style={{ color: "var(--amber)" }}>₹{Math.round(emp.totalAdvance).toLocaleString()}</td>
                 <td style={{ color: "var(--red)" }}>{emp.totalEarlyLeave > 0 ? `−₹${emp.totalEarlyLeave?.toLocaleString()}` : "—"}</td>
-                <td><span className={`badge ${emp.netSalary >= 0 ? "badge-green" : "badge-red"}`}>₹{emp.netSalary?.toLocaleString()}</span></td>
-                <td><span className="badge badge-blue">₹{emp.totalPaid?.toLocaleString()}</span></td>
-                <td>{emp.remaining > 0 ? <span className="badge badge-amber">₹{emp.remaining?.toLocaleString()}</span> : <span style={{ color: "var(--text-tertiary)" }}>—</span>}</td>
-                <td>{emp.excess > 0 ? <span className="badge badge-purple">₹{emp.excess?.toLocaleString()}</span> : <span style={{ color: "var(--text-tertiary)" }}>—</span>}</td>
+                <td><span className={`badge ${emp.netSalary >= 0 ? "badge-green" : "badge-red"}`}>₹{Math.round(emp.netSalary).toLocaleString()}</span></td>
+                <td><span className="badge badge-blue">₹{Math.round(emp.totalPaid).toLocaleString()}</span></td>
+                <td>{emp.remaining > 0 ? <span className="badge badge-amber">₹{Math.round(emp.remaining).toLocaleString()}</span> : <span style={{ color: "var(--text-tertiary)" }}>—</span>}</td>
+                <td>{emp.excess > 0 ? <span className="badge badge-purple">₹{Math.round(emp.excess).toLocaleString()}</span> : <span style={{ color: "var(--text-tertiary)" }}>—</span>}</td>
                 <td>
                   <button className="secondary-btn" style={{ padding: "6px 12px", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }} onClick={() => printPayslip(emp, month, year)}>
                     <Printer size={12} /> Print
