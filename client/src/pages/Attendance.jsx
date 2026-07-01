@@ -29,6 +29,7 @@ function Attendance() {
   const [employees, setEmployees] = useState([]);
   const [projects, setProjects] = useState([]);
   const [search, setSearch] = useState("");
+  const [filterDate, setFilterDate] = useState("");
   const [activeTab, setActiveTab] = useState("single");
 
   const [employee, setEmployee] = useState("");
@@ -113,12 +114,13 @@ function Attendance() {
     } catch (e) { console.log(e); }
   }
 
-  const filtered = records.filter(r =>
-    r.employeeName.toLowerCase().includes(search.toLowerCase()) ||
-    r.date.includes(search) ||
-    r.status.toLowerCase().includes(search.toLowerCase()) ||
-    (r.project || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = records.filter(r => {
+    if (filterDate && r.date !== filterDate) return false;
+    if (search && !r.employeeName.toLowerCase().includes(search.toLowerCase()) &&
+        !r.date.includes(search) && !r.status.toLowerCase().includes(search.toLowerCase()) &&
+        !(r.project || "").toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
 
   const presentCount = filtered.filter(r => r.status === "Present").length;
   const halfDayCount = filtered.filter(r => r.status === "Half Day").length;
@@ -251,9 +253,23 @@ function Attendance() {
       )}
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
-        <div className="search-bar">
-          <Search size={14} />
-          <input type="text" placeholder="Search by name, date, status, project..." value={search} onChange={e => setSearch(e.target.value)} />
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+          <div className="search-bar">
+            <Search size={14} />
+            <input type="text" placeholder="Search by name, status, project..." value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
+            style={{ background: "var(--bg-surface)", color: "var(--text-primary)", border: filterDate ? "1px solid var(--accent)" : "1px solid var(--border-default)", borderRadius: "var(--radius-md)", padding: "10px 14px", fontSize: "14px", fontFamily: "inherit", cursor: "pointer" }}
+          />
+          <button className="add-btn" style={{ padding: "10px 14px", fontSize: "12px", background: "rgba(10,132,255,0.15)", color: "var(--accent)", border: "1px solid rgba(10,132,255,0.3)" }}
+            onClick={() => setFilterDate(new Date().toISOString().split("T")[0])}>
+            Today
+          </button>
+          {filterDate && (
+            <button className="secondary-btn" style={{ padding: "10px 14px", fontSize: "12px" }} onClick={() => setFilterDate("")}>
+              Clear
+            </button>
+          )}
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
           <span className="badge badge-green">{presentCount} Present</span>
