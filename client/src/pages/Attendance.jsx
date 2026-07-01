@@ -258,9 +258,7 @@ function Attendance() {
             <Search size={14} />
             <input type="text" placeholder="Search by name, status, project..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <input type="date" value={filterDate} onChange={e => setFilterDate(e.target.value)}
-            style={{ background: "var(--bg-surface)", color: "var(--text-primary)", border: filterDate ? "1px solid var(--accent)" : "1px solid var(--border-default)", borderRadius: "var(--radius-md)", padding: "10px 14px", fontSize: "14px", fontFamily: "inherit", cursor: "pointer" }}
-          />
+          <DatePicker value={filterDate} onChange={setFilterDate} placeholder="Filter by date" />
           <button className="add-btn" style={{ padding: "10px 14px", fontSize: "12px", background: "rgba(10,132,255,0.15)", color: "var(--accent)", border: "1px solid rgba(10,132,255,0.3)" }}
             onClick={() => setFilterDate(new Date().toISOString().split("T")[0])}>
             Today
