@@ -371,11 +371,11 @@ function Payroll() {
       <div className="table-container" style={{ overflowX: "auto" }}>
         <table className="employee-table">
           <thead>
-            <tr><th>Employee</th><th>Dept</th><th>Wage/Day</th><th>Days Present</th><th>Gross</th><th>Overtime</th><th>Advances</th><th>Early Leave</th><th>Net Salary</th><th>Total Paid</th><th>Remaining</th><th>Excess</th><th>Payslip</th></tr>
+            <tr><th>Employee</th><th>Dept</th><th>Wage/Day</th><th>Days Present</th><th>Gross</th><th>OT</th><th>Advances</th><th>Early Leave</th><th>Carry Forward</th><th>Net Salary</th><th>Total Paid</th><th>Remaining</th><th>Excess</th><th>Payslip</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={13} className="empty-state">{payroll.length === 0 ? `No payroll data for ${MONTH_NAMES[month]} ${year}` : "No employee found"}</td></tr>
+              <tr><td colSpan={14} className="empty-state">{payroll.length === 0 ? `No payroll data for ${MONTH_NAMES[month]} ${year}` : "No employee found"}</td></tr>
             ) : filtered.map((emp) => (
               <tr key={emp.id}>
                 <td style={{ fontWeight: "600" }}>{emp.name}</td>
