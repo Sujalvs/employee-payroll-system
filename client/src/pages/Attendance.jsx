@@ -254,17 +254,19 @@ function Attendance() {
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
         <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-          <div className="search-bar">
+          <div className="search-bar" style={{ height: "42px", display: "flex", alignItems: "center" }}>
             <Search size={14} />
             <input type="text" placeholder="Search by name, status, project..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <DatePicker value={filterDate} onChange={setFilterDate} placeholder="Filter by date" />
-          <button className="add-btn" style={{ padding: "10px 14px", fontSize: "12px", background: "rgba(10,132,255,0.15)", color: "var(--accent)", border: "1px solid rgba(10,132,255,0.3)" }}
+          <div style={{ height: "42px", display: "flex", alignItems: "center" }}>
+            <DatePicker value={filterDate} onChange={setFilterDate} placeholder="Filter by date" />
+          </div>
+          <button className="add-btn" style={{ height: "42px", padding: "0 16px", fontSize: "13px", background: "rgba(10,132,255,0.15)", color: "var(--accent)", border: "1px solid rgba(10,132,255,0.3)" }}
             onClick={() => setFilterDate(new Date().toISOString().split("T")[0])}>
             Today
           </button>
           {filterDate && (
-            <button className="secondary-btn" style={{ padding: "10px 14px", fontSize: "12px" }} onClick={() => setFilterDate("")}>
+            <button className="secondary-btn" style={{ height: "42px", padding: "0 16px", fontSize: "13px" }} onClick={() => setFilterDate("")}>
               Clear
             </button>
           )}
